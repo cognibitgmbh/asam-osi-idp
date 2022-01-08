@@ -36,7 +36,9 @@ class OSI3GroundTruthTrace:
             elif len(message_length_str) != 4:
                 raise RuntimeError("Unexpected EOF in OSI3 trace file")
             message_length: int = struct.unpack('<I', message_length_str)[0]
-            yield GroundTruth().ParseFromString(self.file.read(message_length))
+            message = GroundTruth()
+            message.ParseFromString(self.file.read(message_length))
+            yield message
 
 
 def main():
