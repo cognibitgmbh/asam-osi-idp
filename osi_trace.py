@@ -46,10 +46,15 @@ def main():
         print(f"Usage:\n{sys.argv[0]} <osi_trace_file>")
         sys.exit(1)
     with OSI3GroundTruthTrace(sys.argv[1]) as trace:
-        count = 0
-        for _ in trace:
-            count += 1
-        print(count)
+        message = trace.__iter__().__next__()
+        for object in message.moving_object:
+            print(object)
+            #if object.id == message.host_vehicle_id:
+            #    print(len(object.assigned_lane_id))
+            #    for lane_id in object.assigned_lane_id:
+            #        print(lane_id.value)
+        #for lane in message.lane:
+        #    print(len(lane.classification.centerline))
 
 
 if __name__ == '__main__':
