@@ -17,74 +17,97 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 
 # TODO: Make both files and UDP streams work, even though they don´t work the same way
 
-
-class BinaryStream(abc.ABC):
+class OSI3GroundTruthIterator(abc.ABC):
+    
     @abc.abstractmethod
-    def open(self):
+    def __enter__(self):
         pass
 
     @abc.abstractmethod
-    def read(self, n: int) -> bytes:
+    def __exit__(self, exc_type, *args) -> bool:
         pass
 
     @abc.abstractmethod
-    def close(self):
+    def __iter__(self) -> Iterator[GroundTruth]:
         pass
 
-
-class FileStream(BinaryStream):
-    def __init__(self, path):
-        self.path = path
-        self.file: Optional[TextIO] = None
-
-    def open(self):
-        if self.file is None:
-            self.file = open(self.path, "rb")
-
-    def read(self, n: int) -> bytes:
-        if self.file is None:
-            raise RuntimeError("File is not open")
-        time.sleep(1)
-        return self.file.read(n)
-
-    def close(self):
-        if self.file is None:
-            raise RuntimeError("File is not open")
-        self.file.close()
-        self.file = None
-
-
-class UDPStream(BinaryStream):
+class UDPGroundTruthIterator(OSI3GroundTruthIterator):
+    
     def __init__(self, bind_address: str, port: int):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((bind_address, port))
 
-    def open(self):
-        pass
-
-    def read(self, n: int) -> bytes:
-        data, _ = self.socket.recvfrom(n)
+    def read(self, n: int = 2**14) -> bytes:
+        data = self.socket.recv(n)
         return data
 
-    def close(self):
-        self.socket.close()
-
-
-class OSI3GroundTruthIterator:
-    def __init__(self, binary_stream: BinaryStream):
-        self.binary_stream = binary_stream
+    def parse_int(self, data: bytes) -> int:
+        return int.from_bytes(data, byteorder='little', signed=True)
 
     def __enter__(self):
-        self.binary_stream.open()
-        return self
+        pass
 
-    def __exit__(self, exc_type: Optional[type[BaseException]], *args) -> bool:
-        self.binary_stream.close()
+    def __exit__(self, exc_type, *args) -> bool:
+        self.socket.close()
         return exc_type is None
 
     def __iter__(self) -> Iterator[GroundTruth]:
         while True:
-            message_length_str = self.binary_stream.read(4)
+            expected_slice_id : int = 1
+            message_bytes = b""
+            while True:
+                udp_package = self.read()
+                slice_id: int = self.parse_int(udp_package[0:4]) 
+                last_slice = (slice_id == -expected_slice_id)
+                slice_id = abs(slice_id)
+                if slice_id == expected_slice_id:
+                    slice_length: int = self.parse_int(udp_package[4:8])
+                    if slice_length + 8 != len(udp_package):
+                        print("throwing away current groundtruth bytes")
+                        print("length field does not conform with udp length")
+                        break
+                    message_bytes += udp_package[8:] 
+                else:
+                    print("throwing away current groundtruth bytes")
+                    print("received slice id:" + str(slice_id) + "  expected:" + str(expected_slice_id))
+                    break
+                if last_slice:
+                    message = GroundTruth()
+                    message.ParseFromString(message_bytes)
+                    yield message
+                    break
+                expected_slice_id += 1
+
+
+#class BinaryStream(abc.ABC):
+#    @abc.abstractmethod
+#    def open(self):
+#        pass
+#
+#    @abc.abstractmethod
+#    def read(self, n: int) -> bytes:
+#        pass
+#
+#    @abc.abstractmethod
+#    def close(self):
+#        pass
+#
+#
+class FileGroundTruthIterator(OSI3GroundTruthIterator):
+    def __enter__(self):
+        if self.file is None:
+            self.file = open(self.path, "rb")
+
+    def __exit__(self, exc_type, *args) -> bool:
+        if self.file is None:
+            raise RuntimeError("File is not open")
+        self.file.close()
+        self.file = None
+        return exc_type is None
+
+    def __iter__(self) -> Iterator[GroundTruth]:
+        while True:
+            message_length_str = self.read(4)
             if len(message_length_str) == 0:
                 return
             elif len(message_length_str) != 4:
@@ -93,5 +116,60 @@ class OSI3GroundTruthIterator:
             message_length: int = struct.unpack('<I', message_length_str)[0]
             print(message_length)
             message = GroundTruth()
-            message.ParseFromString(self.binary_stream.read(message_length))
+            message.ParseFromString(self.read(message_length))
             yield message
+
+    def __init__(self, path):
+        self.path = path
+        self.file: Optional[TextIO] = None
+
+
+    def read(self, n: int) -> bytes:
+        if self.file is None:
+            raise RuntimeError("File is not open")
+        time.sleep(1)
+        return self.file.read(n)
+
+
+
+#class UDPStream(BinaryStream):
+#    def __init__(self, bind_address: str, port: int):
+#        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#        self.socket.bind((bind_address, port))
+#
+#    def open(self):
+#        pass
+#
+#    def read(self, n: int) -> bytes:
+#        data, _ = self.socket.recvfrom(n)
+#        return data
+#
+#    def close(self):
+#        self.socket.close()
+
+
+#class OSI3GroundTruthIterator:
+#    def __init__(self, binary_stream: BinaryStream):
+#        self.binary_stream = binary_stream
+#
+#    def __enter__(self):
+#        self.binary_stream.open()
+#        return self
+#
+#    def __exit__(self, exc_type, *args) -> bool:
+#        self.binary_stream.close()
+#        return exc_type is None
+#
+#    def __iter__(self) -> Iterator[GroundTruth]:
+#        while True:
+#            message_length_str = self.binary_stream.read(4)
+#            if len(message_length_str) == 0:
+#                return
+#            elif len(message_length_str) != 4:
+#                raise RuntimeError("Unexpected EOF in OSI3 stream")
+#            print(message_length_str)
+#            message_length: int = struct.unpack('<I', message_length_str)[0]
+#            print(message_length)
+#            message = GroundTruth()
+#            message.ParseFromString(self.binary_stream.read(message_length))
+#            yield message

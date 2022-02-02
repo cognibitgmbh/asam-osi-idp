@@ -3,13 +3,12 @@ import threading
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
-from  osi_iterator import OSI3GroundTruthIterator, UDPStream
+from  osi_iterator import OSI3GroundTruthIterator, UDPGroundTruthIterator
 
 
 class OSI3Extractor:
     def __init__(self, ip_addr: str, port: int = 48198):
-        udp_stream = UDPStream(ip_addr, port)
-        self.ground_truth_iterator = OSI3GroundTruthIterator(udp_stream)
+        self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self.thread_target)
     
     def start(self) -> threading.Thread:
