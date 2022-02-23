@@ -2,14 +2,27 @@ import sys
 import threading
 import math
 import random
+import time
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane
 from osi3.osi_common_pb2 import Vector3d
+from osi3.osi_object_pb2 import MovingObject
 from typing import Dict, List
 
-
 from  osi_iterator import OSI3GroundTruthIterator, UDPGroundTruthIterator
+
+use_deprecated_assigned_lane = True
+
+def get_assigned_laned_id(object: MovingObject):
+    if use_deprecated_assigned_lane:
+        if len(object.assigned_lane_id) == 0:
+            return -1
+        return object.assigned_lane_id[0].value
+    else:
+        if len(object.moving_object_classification.assigned_lane_id) == 0:
+            return -1
+        return object.moving_object_classification.assigned_lane_id[0].value
 
 def calc_curvature_for_lane(lane: Lane) -> List[float]:
     centerline = lane.classification.centerline
@@ -35,7 +48,13 @@ def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) ->
     else:
         return math.sqrt((vec1.x-vec2.x)**2 + (vec1.y-vec2.y)**2 + (vec1.z-vec2.z)**2)
 
-def find_lane_pice_for_coord(lane: Lane, coordinate: Vector3d) -> int:
+def calculate_piece_progress(point:Vector3d, start: Vector3d, end: Vector3d, ignore_z: bool = True) -> float:
+    #TODO use more suffisticated calculation, maybe using projection
+    start_point_dist = euclidean_distance(start, point, ignore_z=ignore_z) 
+    end_point_dist = euclidean_distance(end, point, ignore_z=ignore_z)
+    return start_point_dist/(start_point_dist + end_point_dist)
+
+def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress: bool = False) -> int:
     id_closest_lane_piece = -1
     distance_closest_lane_piece = float("Inf")
     centerline = lane.classification.centerline
@@ -60,9 +79,13 @@ def find_lane_pice_for_coord(lane: Lane, coordinate: Vector3d) -> int:
     else:
         a = id_closest_lane_piece
         b = id_closest_lane_piece +1
+    if return_progress:
+        return a, calculate_piece_progress(coordinate, centerline[a], centerline[b])
     return a
 
 class OSI3Extractor:
+    host_vehicle_id: int = -1
+    host_vehicle: MovingObject = None
     lanes: Dict[int, Lane] = {}
     lane_curvatures: Dict[int, List[float]] = {}
     def __init__(self, ip_addr: str, port: int = 48198):
@@ -74,34 +97,58 @@ class OSI3Extractor:
         return self.thread
 
     def thread_target(self):
-        use_deprecated_assigned_lane = True
         for ground_truth in self.ground_truth_iterator:
             if len(ground_truth.lane) != 0:
                 self.update_lanes(ground_truth.lane)
+            self.host_vehicle_id = ground_truth.host_vehicle_id
             for object in ground_truth.moving_object:
-                if object.id == ground_truth.host_vehicle_id:
-                    if use_deprecated_assigned_lane:
-                        lane_id = object.assigned_lane_id[0].value
-                    else:
-                        lane_id = object.moving_object_classification.assigned_lane_id[0].value
-                    closest_lane_pice = find_lane_pice_for_coord(self.lanes[lane_id], object.base.position)
-                    print("Id of closest lane piece: " + str(closest_lane_pice))
-                    print("curvature of closest piece: " + str(self.lane_curvatures[lane_id][closest_lane_pice]))
+                if object.id == self.host_vehicle_id:
+                    self.host_vehicle = object
+                    lane_id = get_assigned_laned_id(object)
+                    closest_lane_piece = find_lane_piece_for_coord(self.lanes[lane_id], object.base.position)
+           #         print("Id of closest lane piece: " + str(closest_lane_piece))
+           #         print("curvature of closest piece: " + str(self.lane_curvatures[lane_id][closest_lane_piece]))
                     break
-            print("----------------------------------------------------")
+        #    print("----------------------------------------------------")
 
     def update_lanes(self, new_lanes: Lane):
         for l in new_lanes:
             self.lanes[l.id.value] = l
             self.lane_curvatures[l.id.value] = calc_curvature_for_lane(l)
 
+    def get_road_curvature(self):
+        if self.host_vehicle == None:
+            return "No Host vehicle"
+        lane_id = get_assigned_laned_id(self.host_vehicle)
+        if lane_id == -1:
+            return "Host vehicle has no assigned lane"
+        #TODO What happens with additional assigned lanes?
+        piece_id, percentage = find_lane_piece_for_coord(self.lanes[lane_id], self.host_vehicle.base.position, return_progress=True) 
+        return self.lane_curvatures[lane_id][piece_id]*(1-percentage) + self.lane_curvatures[lane_id][piece_id+1]*percentage
             
+    def get_road_curvature_change(self):
+        if self.host_vehicle == None:
+            return "No Host vehicle"
+        lane_id = get_assigned_laned_id(self.host_vehicle)
+        if lane_id == -1:
+            return "Host vehicle has no assigned lane"
+        #TODO What happens with additional assigned lanes?
+        piece_id = find_lane_piece_for_coord(self.lanes[lane_id], self.host_vehicle.base.position) 
+
+        curvature_difference = self.lane_curvatures[lane_id][piece_id + 1] - self.lane_curvatures[lane_id][piece_id]
+        piece_length = euclidean_distance(self.lanes[lane_id].classification.centerline[piece_id], 
+                self.lanes[lane_id].classification.centerline[piece_id + 1])
+        return curvature_difference / piece_length
 def main():
     if len(sys.argv) != 2:
         print(f"Usage:\n{sys.argv[0]} <port>")
         sys.exit(1)
     osi_extractor = OSI3Extractor("127.0.0.1", int(sys.argv[1]))
     osi_extractor.start()
+    for i in range(100):
+        time.sleep(1)
+        print("Current road curvature: " + str(osi_extractor.get_road_curvature()))
+        print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
 
 
 if __name__ == "__main__":
