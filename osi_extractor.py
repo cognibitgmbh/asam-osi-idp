@@ -138,6 +138,13 @@ class OSI3Extractor:
         piece_length = euclidean_distance(self.lanes[lane_id].classification.centerline[piece_id], 
                 self.lanes[lane_id].classification.centerline[piece_id + 1])
         return curvature_difference / piece_length
+
+    # TODO: lane type of neighbouring lanes
+    def get_ego_lane_type(self) -> tuple[int, int]:
+        classification = self.lanes[self._get_ego_lane_id()].classification
+        return classification.type, classification.subtype
+
+
 def main():
     if len(sys.argv) != 2:
         print(f"Usage:\n{sys.argv[0]} <port>")
@@ -149,6 +156,8 @@ def main():
             time.sleep(1)
             print("Current road curvature: " + str(osi_extractor.get_road_curvature()))
             print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
+            lane_type, lane_subtype = osi_extractor.get_ego_lane_type()
+            print(f"Current lane type: {lane_type}, {lane_subtype}")
         except RuntimeError as e:
             print(e)
 
