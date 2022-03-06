@@ -8,21 +8,20 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_object_pb2 import MovingObject
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from  osi_iterator import OSI3GroundTruthIterator, UDPGroundTruthIterator
+from osi_iterator import UDPGroundTruthIterator
 
 use_deprecated_assigned_lane = True
 
-def get_assigned_laned_id(object: MovingObject):
+def get_assigned_lane_id(moving_obj: MovingObject) -> Optional[int]:
+    # TODO: What happens with additional assigned lanes?
+    assigned_lane_id = moving_obj.moving_object_classification.assigned_lane_id
     if use_deprecated_assigned_lane:
-        if len(object.assigned_lane_id) == 0:
-            return -1
-        return object.assigned_lane_id[0].value
-    else:
-        if len(object.moving_object_classification.assigned_lane_id) == 0:
-            return -1
-        return object.moving_object_classification.assigned_lane_id[0].value
+        assigned_lane_id = moving_obj.assigned_lane_id
+    if len(assigned_lane_id) == 0:
+        return None
+    return assigned_lane_id[0].value
 
 def calc_curvature_for_lane(lane: Lane) -> List[float]:
     centerline = lane.classification.centerline
@@ -84,10 +83,11 @@ def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress:
     return a
 
 class OSI3Extractor:
-    host_vehicle_id: int = -1
-    host_vehicle: MovingObject = None
+    host_vehicle_id: Optional[int] = None
+    host_vehicle: Optional[MovingObject] = None
     lanes: Dict[int, Lane] = {}
     lane_curvatures: Dict[int, List[float]] = {}
+
     def __init__(self, ip_addr: str, port: int = 48198):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self.thread_target)
@@ -104,12 +104,21 @@ class OSI3Extractor:
             for object in ground_truth.moving_object:
                 if object.id == self.host_vehicle_id:
                     self.host_vehicle = object
-                    lane_id = get_assigned_laned_id(object)
+                    lane_id = get_assigned_lane_id(object)
                     closest_lane_piece = find_lane_piece_for_coord(self.lanes[lane_id], object.base.position)
            #         print("Id of closest lane piece: " + str(closest_lane_piece))
            #         print("curvature of closest piece: " + str(self.lane_curvatures[lane_id][closest_lane_piece]))
                     break
         #    print("----------------------------------------------------")
+
+    def _get_ego_lane_id(self) -> int:
+        if self.host_vehicle is None:
+            raise RuntimeError("No host vehicle")
+        lane_id = get_assigned_lane_id(self.host_vehicle)
+        if lane_id is None:
+            raise RuntimeError("Host vehicle has no assigned lane")
+        return lane_id
+
 
     def update_lanes(self, new_lanes: Lane):
         for l in new_lanes:
@@ -117,22 +126,12 @@ class OSI3Extractor:
             self.lane_curvatures[l.id.value] = calc_curvature_for_lane(l)
 
     def get_road_curvature(self):
-        if self.host_vehicle == None:
-            return "No Host vehicle"
-        lane_id = get_assigned_laned_id(self.host_vehicle)
-        if lane_id == -1:
-            return "Host vehicle has no assigned lane"
-        #TODO What happens with additional assigned lanes?
+        lane_id = self._get_ego_lane_id()
         piece_id, percentage = find_lane_piece_for_coord(self.lanes[lane_id], self.host_vehicle.base.position, return_progress=True) 
         return self.lane_curvatures[lane_id][piece_id]*(1-percentage) + self.lane_curvatures[lane_id][piece_id+1]*percentage
-            
+
     def get_road_curvature_change(self):
-        if self.host_vehicle == None:
-            return "No Host vehicle"
-        lane_id = get_assigned_laned_id(self.host_vehicle)
-        if lane_id == -1:
-            return "Host vehicle has no assigned lane"
-        #TODO What happens with additional assigned lanes?
+        lane_id = self._get_ego_lane_id()
         piece_id = find_lane_piece_for_coord(self.lanes[lane_id], self.host_vehicle.base.position) 
 
         curvature_difference = self.lane_curvatures[lane_id][piece_id + 1] - self.lane_curvatures[lane_id][piece_id]
@@ -146,9 +145,12 @@ def main():
     osi_extractor = OSI3Extractor("127.0.0.1", int(sys.argv[1]))
     osi_extractor.start()
     for i in range(100):
-        time.sleep(1)
-        print("Current road curvature: " + str(osi_extractor.get_road_curvature()))
-        print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
+        try:
+            time.sleep(1)
+            print("Current road curvature: " + str(osi_extractor.get_road_curvature()))
+            print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
+        except RuntimeError as e:
+            print(e)
 
 
 if __name__ == "__main__":
