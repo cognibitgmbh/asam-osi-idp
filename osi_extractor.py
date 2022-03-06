@@ -144,6 +144,11 @@ class OSI3Extractor:
         classification = self.lanes[self._get_ego_lane_id()].classification
         return classification.type, classification.subtype
 
+    def currently_on_intersection(self) -> bool:
+        classification = self.lanes[self._get_ego_lane_id()].classification
+        # TODO: somehow deal with this "magic constant"
+        return classification.type == 4
+
 
 def main():
     if len(sys.argv) != 2:
