@@ -47,11 +47,18 @@ def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) ->
     else:
         return math.sqrt((vec1.x-vec2.x)**2 + (vec1.y-vec2.y)**2 + (vec1.z-vec2.z)**2)
 
-def calculate_piece_progress(point:Vector3d, start: Vector3d, end: Vector3d, ignore_z: bool = True) -> float:
-    #TODO use more suffisticated calculation, maybe using projection
-    start_point_dist = euclidean_distance(start, point, ignore_z=ignore_z) 
-    end_point_dist = euclidean_distance(end, point, ignore_z=ignore_z)
-    return start_point_dist/(start_point_dist + end_point_dist)
+def calculate_piece_progress(point:Vector3d, start: Vector3d, end: Vector3d) -> float:
+    #https://stackoverflow.com/questions/61341712/calculate-projected-point-location-x-y-on-given-line-startx-y-endx-y
+
+    l2 = euclidean_distance(start, end, ignore_z = False) ** 2
+    if l2 == 0:
+      raise Exception('a and b are the same points')
+      
+    t = ((point.x - start.x)*(end.x - start.x)  + (point.y - start.y)*(end.y - start.y)  + (point.z - start.z)*(end.z - start.z)) / l2
+    t = max(0, min(1, t))
+    
+    #projection = Vector3d(x=a.x + t*(b.x -a.x), y=a.y + t*(b.y -a.y), z=a.z + t*(b.z -a.z))
+    return t 
 
 def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress: bool = False) -> int:
     id_closest_lane_piece = -1
@@ -149,6 +156,13 @@ class OSI3Extractor:
         # TODO: somehow deal with this "magic constant"
         return classification.type == 4
 
+    def get_road_z(self) -> float:
+        self.host_vehicle.base.position
+        ego_lane = self.lanes[self._get_ego_lane_id()]
+        piece_id, t = find_lane_piece_for_coord(ego_lane , self.host_vehicle.base.position, return_progress = True)
+        ego_centerline = ego_lane.classification.centerline
+        return t*ego_centerline[piece_id].z + (1-t)*ego_centerline[piece_id + 1].z
+
 
 def main():
     if len(sys.argv) != 2:
@@ -163,6 +177,8 @@ def main():
             print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
             lane_type, lane_subtype = osi_extractor.get_ego_lane_type()
             print(f"Current lane type: {lane_type}, {lane_subtype}")
+            road_z = osi_extractor.get_road_z()
+            print(f"Current road z: {road_z}")
         except RuntimeError as e:
             print(e)
 
