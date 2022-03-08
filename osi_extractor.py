@@ -156,6 +156,13 @@ class OSI3Extractor:
         # TODO: somehow deal with this "magic constant"
         return classification.type == 4
 
+    def get_road_z(self) -> float:
+        self.host_vehicle.base.position
+        ego_lane = self.lanes[self._get_ego_lane_id()]
+        piece_id, t = find_lane_piece_for_coord(ego_lane , self.host_vehicle.base.position, return_progress = True)
+        ego_centerline = ego_lane.classification.centerline
+        return t*ego_centerline[piece_id].z + (1-t)*ego_centerline[piece_id + 1].z
+
 
 def main():
     if len(sys.argv) != 2:
@@ -170,6 +177,8 @@ def main():
             print("Current road curvature change: " + str(osi_extractor.get_road_curvature_change()))
             lane_type, lane_subtype = osi_extractor.get_ego_lane_type()
             print(f"Current lane type: {lane_type}, {lane_subtype}")
+            road_z = osi_extractor.get_road_z()
+            print(f"Current road z: {road_z}")
         except RuntimeError as e:
             print(e)
 
