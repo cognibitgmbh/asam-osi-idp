@@ -48,11 +48,18 @@ def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) ->
     else:
         return math.sqrt((vec1.x-vec2.x)**2 + (vec1.y-vec2.y)**2 + (vec1.z-vec2.z)**2)
 
-def calculate_piece_progress(point:Vector3d, start: Vector3d, end: Vector3d, ignore_z: bool = True) -> float:
-    #TODO use more suffisticated calculation, maybe using projection
-    start_point_dist = euclidean_distance(start, point, ignore_z=ignore_z) 
-    end_point_dist = euclidean_distance(end, point, ignore_z=ignore_z)
-    return start_point_dist/(start_point_dist + end_point_dist)
+def calculate_piece_progress(point:Vector3d, start: Vector3d, end: Vector3d) -> float:
+    #https://stackoverflow.com/questions/61341712/calculate-projected-point-location-x-y-on-given-line-startx-y-endx-y
+
+    l2 = euclidean_distance(start, end, ignore_z = False) ** 2
+    if l2 == 0:
+      raise Exception('a and b are the same points')
+      
+    t = ((point.x - start.x)*(end.x - start.x)  + (point.y - start.y)*(end.y - start.y)  + (point.z - start.z)*(end.z - start.z)) / l2
+    t = max(0, min(1, t))
+    
+    #projection = Vector3d(x=a.x + t*(b.x -a.x), y=a.y + t*(b.y -a.y), z=a.z + t*(b.z -a.z))
+    return t 
 
 def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress: bool = False) -> int:
     id_closest_lane_piece = -1
