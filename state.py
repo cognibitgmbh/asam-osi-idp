@@ -1,8 +1,11 @@
-from typing import List, Tuple
-from osi3.osi_common_pb2 import Vector3d, Dimension3d
-from osi3.osi_trafficsign_pb2 import TrafficSign
-from osi3.osi_trafficlight_pb2 import TrafficLight
+from dataclasses import dataclass
 
+from osi3.osi_common_pb2 import Dimension3d, Vector3d
+from osi3.osi_trafficlight_pb2 import TrafficLight
+from osi3.osi_trafficsign_pb2 import TrafficSign
+
+
+@dataclass
 class RoadState:
     curvature: float
     curvature_change: float
@@ -10,20 +13,22 @@ class RoadState:
     distance_to_lane_end: float
     distance_to_ramp: float
     distance_to_next_exit: float
-    lane_markings: List[int]
-    lane_type: Tuple[int,int]
-    speed_limit: int # Or more info?
-    traffic_signs: List[TrafficSign] # Based on sensor?
-    traffic_lights: List[TrafficLight] # Based on sensor?
+    lane_markings: list[int]
+    lane_type: tuple[int, int]
+    speed_limit: int  # Or more info?
+    traffic_signs: list[TrafficSign]  # Based on sensor?
+    traffic_lights: list[TrafficLight]  # Based on sensor?
     road_z: float
-#    road_topography: ?
+    # road_topography: ?
     road_on_highway: bool
     road_on_junction: bool
     road_in_main_direction: bool
 
+
+@dataclass
 class MovingObject:
     simulator_id: int
-    object_type: int 
+    object_type: int
     dimensions: Dimension3d
     location: Vector3d
     velocity: Vector3d
@@ -48,13 +53,15 @@ class MovingObject:
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
 
+
+@dataclass
 class StaticObstacle:
     obstacle_dimensions: Dimension3d
     obstacle_location: Vector3d
 
 
+@dataclass
 class State:
     road_state: RoadState
-    moving_objects: List[MovingObject]
-    static_obstacles: List[StaticObstacle]
-
+    moving_objects: list[MovingObject]
+    static_obstacles: list[StaticObstacle]
