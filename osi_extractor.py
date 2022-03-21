@@ -11,6 +11,7 @@ from osi3.osi_object_pb2 import MovingObject
 from typing import Dict, List, Optional
 
 from osi_iterator import UDPGroundTruthIterator
+from state import RoadState, MovingObjectState, StaticObstacle, State
 
 use_deprecated_assigned_lane = True
 
@@ -22,6 +23,12 @@ def get_assigned_lane_id(moving_obj: MovingObject) -> Optional[int]:
     if len(assigned_lane_id) == 0:
         return None
     return assigned_lane_id[0].value
+
+def get_all_assigned_lane_ids(moving_obj: MovingObject) -> Optional[int]:
+    assigned_lane_id = moving_obj.moving_object_classification.assigned_lane_id
+    if use_deprecated_assigned_lane:
+        assigned_lane_id = moving_obj.assigned_lane_id
+    return [lane.value for lane in assigned_lane_id]
 
 def calc_curvature_for_lane(lane: Lane) -> List[float]:
     centerline = lane.classification.centerline
@@ -89,12 +96,47 @@ def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress:
         return a, calculate_piece_progress(coordinate, centerline[a], centerline[b])
     return a
 
+
+def convert_to_moving_object_state(object: MovingObject):
+    moving_object_state = MovingObjectState()
+    moving_object_state.simulator_id = object.id.value
+    moving_object_state.object_type = object.type 
+    moving_object_state.dimensions = object.base.dimension
+    moving_object_state.location = object.base.position
+    moving_object_state.velocity = object.base.velocity
+    moving_object_state.acceleration = object.base.acceleration
+    moving_object_state.yaw_angle = object.base.orientation.yaw
+    moving_object_state.pitch_angle = object.base.orientation.pitch
+    moving_object_state.roll_angle = object.base.orientation.roll
+    moving_object_state.lane_ids = get_all_assigned_lane_ids(object)
+    light_state = object.vehicle_classification.light_state
+    moving_object_state.indicator_signal = light_state.indicator_state
+    moving_object_state.brake_light = light_state.brake_light_state
+    moving_object_state.front_fog_light = light_state.front_fog_light
+    moving_object_state.rear_fog_light = light_state.rear_fog_light
+    moving_object_state.head_light = light_state.head_light
+    moving_object_state.high_beam = light_state.high_beam
+    moving_object_state.reversing_light = light_state.reversing_light
+    moving_object_state.license_plate_illumination_rear = light_state.license_plate_illumination_rear
+    moving_object_state.emergency_vehicle_illumination = light_state.emergency_vehicle_illumination
+    moving_object_state.service_vehicle_illumination = light_state.service_vehicle_illumination
+
+    #TODO: Replace 'None' with actual values
+    moving_object_state.heading_angle = None
+    moving_object_state.lane_position = None
+    moving_object_state.road_id = None
+    moving_object_state.road_s = None
+    return moving_object_state
+
+
+
 class OSI3Extractor:
     host_vehicle_id: Optional[int] = None
     host_vehicle: Optional[MovingObject] = None
     lanes: Dict[int, Lane] = {}
     lane_curvatures: Dict[int, List[float]] = {}
-
+    current_state: State = None
+    
     def __init__(self, ip_addr: str, port: int = 48198):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self.thread_target)
@@ -104,19 +146,27 @@ class OSI3Extractor:
         return self.thread
 
     def thread_target(self):
+        arising_state: State = None
         for ground_truth in self.ground_truth_iterator:
             if len(ground_truth.lane) != 0:
                 self.update_lanes(ground_truth.lane)
             self.host_vehicle_id = ground_truth.host_vehicle_id
-            for object in ground_truth.moving_object:
-                if object.id == self.host_vehicle_id:
-                    self.host_vehicle = object
-                    lane_id = get_assigned_lane_id(object)
-                    closest_lane_piece = find_lane_piece_for_coord(self.lanes[lane_id], object.base.position)
+            m_o_list: list[MovingObjectState] = []
+            for i, object in enumerate(ground_truth.moving_object):
+                if object.id.value != i:
+                    print("Waring: the objects position in the moving_object list does not equal object.id")
+                m_o_list.append(convert_to_moving_object_state(object)) 
+
+#                if object.id == self.host_vehicle_id:
+#                    self.host_vehicle = object
+#                    lane_id = get_assigned_lane_id(object)
+#                    closest_lane_piece = find_lane_piece_for_coord(self.lanes[lane_id], object.base.position)
            #         print("Id of closest lane piece: " + str(closest_lane_piece))
            #         print("curvature of closest piece: " + str(self.lane_curvatures[lane_id][closest_lane_piece]))
-                    break
+#                    break
         #    print("----------------------------------------------------")
+            print("How many moving objects: " + str(len(m_o_list)))                
+            self.current_state = State(m_o_list, [], self.host_vehicle_id)
 
     def _get_ego_lane_id(self) -> int:
         if self.host_vehicle is None:

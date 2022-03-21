@@ -27,17 +27,19 @@ class RoadState:
 
 @dataclass
 class MovingObjectState:
+    def __init__(self):
+        pass #TODO: make it possible to create object without all arguments
     simulator_id: int
     object_type: int
-    dimensions: Dimension3d
-    location: Vector3d
+    dimensions: Dimension3d #TODO: is called dimension without s in osi
+    location: Vector3d #TODO: is called position in osi
     velocity: Vector3d
     acceleration: Vector3d
     yaw_angle: float
     pitch_angle: float
     roll_angle: float
     heading_angle: float
-    lane_id: int
+    lane_ids: list[int]
     lane_position: float
     road_id: int
     road_s: float
@@ -48,7 +50,6 @@ class MovingObjectState:
     head_light: int
     high_beam: int
     reversing_light: int
-    brake_light_state: int
     license_plate_illumination_rear: int
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
@@ -65,3 +66,4 @@ class StaticObstacle:
 class State:
     moving_objects: list[MovingObjectState]
     static_obstacles: list[StaticObstacle]
+    host_vehicle_id: int
