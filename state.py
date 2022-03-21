@@ -26,7 +26,7 @@ class RoadState:
 
 
 @dataclass
-class MovingObject:
+class MovingObjectState:
     simulator_id: int
     object_type: int
     dimensions: Dimension3d
@@ -52,6 +52,7 @@ class MovingObject:
     license_plate_illumination_rear: int
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
+    road_state: RoadState
 
 
 @dataclass
@@ -62,6 +63,5 @@ class StaticObstacle:
 
 @dataclass
 class State:
-    road_state: RoadState
-    moving_objects: list[MovingObject]
+    moving_objects: list[MovingObjectState]
     static_obstacles: list[StaticObstacle]
