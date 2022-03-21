@@ -70,10 +70,10 @@ class OSI3Extractor:
 
 
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage:\n{sys.argv[0]} <port>")
+    if len(sys.argv) != 3:
+        print(f"Usage:\n{sys.argv[0]} <listen ip> <port>")
         sys.exit(1)
-    osi_extractor = OSI3Extractor("127.0.0.1", int(sys.argv[1]))
+    osi_extractor = OSI3Extractor(sys.argv[1], int(sys.argv[2]))
     osi_extractor.start()
     for i in range(100):
         try:
