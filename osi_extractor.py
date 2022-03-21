@@ -1,7 +1,6 @@
 import sys
 import threading
 import math
-import random
 import time
 
 from osi3.osi_groundtruth_pb2 import GroundTruth

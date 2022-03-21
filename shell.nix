@@ -13,5 +13,5 @@ in let
         propagatedBuildInputs = [ pkgs.python39.pkgs.protobuf ];
     };
 in let
-    python = pkgs.python39.withPackages (ps: [ osi3 ]);
+    python = pkgs.python39.withPackages (ps: [ osi3 ps.autopep8 ps.numpy ]);
 in python.env
