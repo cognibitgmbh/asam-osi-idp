@@ -57,7 +57,7 @@ class MovingObjectState:
 
 
 @dataclass
-class StaticObstacle:
+class StationaryObstacle:
     dimensions: Dimension3d
     location: Vector3d
 
@@ -65,5 +65,5 @@ class StaticObstacle:
 @dataclass
 class State:
     moving_objects: list[MovingObjectState]
-    static_obstacles: list[StaticObstacle]
+    stationary_obstacles: list[StationaryObstacle]
     host_vehicle_id: int
