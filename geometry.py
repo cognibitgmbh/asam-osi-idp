@@ -20,7 +20,7 @@ def project_onto_line_segment(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray
-) -> Union[float, np.ndarray]:
+) -> tuple[Union[float, np.ndarray], np.ndarray]:
     """
     Project point p onto one or more line segments defined by seg_1 and seg_2.
 
@@ -31,13 +31,30 @@ def project_onto_line_segment(
     seg_2  -- End points for each line segement.
               Must be an ndarray of the same shape as seg_1
 
-    Returns: ndarray t of shape (n,).
-    For each i between 0 and 3: seg_1[i] + t[i] * (seg_2 - seg_1)[i]
-    is the ith coordinate of the projected point.
+    Returns: 2 ndarrays
+    - t of shape (n,)
+    - v of shape (n, 3)
+    For each i between 0 and 3: seg_1[i] + t[i] * v[i]
+    is the projected point for the ith line segment.
     """
     v = seg_2 - seg_1
     t = np.einsum("ij,ij->i", v, p - seg_1) / np.einsum("ij,ij->i", v, v)
-    return t
+    return t, v
+
+
+def closest_projected_point(
+    p: np.ndarray,
+    seg_1: np.ndarray,
+    seg_2: np.ndarray,
+) -> tuple[np.ndarray, Union[float, np.ndarray]]:
+    t, v = project_onto_line_segment(p, seg_1, seg_2)
+    mask = (0 <= t) & (t <= 1)
+    t_masked = t[mask]
+    projected = seg_1[mask, :] + t_masked * v[mask, :]
+    w = projected - p
+    distance_squared = np.einsum("ij,ij->i", w, w)
+    i = np.argmin(distance_squared)
+    return projected[i], t_masked[i]
 
 
 def main():
