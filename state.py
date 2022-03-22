@@ -58,8 +58,8 @@ class MovingObjectState:
 
 @dataclass
 class StaticObstacle:
-    obstacle_dimensions: Dimension3d
-    obstacle_location: Vector3d
+    dimensions: Dimension3d
+    location: Vector3d
 
 
 @dataclass

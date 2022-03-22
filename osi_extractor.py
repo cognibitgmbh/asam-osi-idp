@@ -44,7 +44,10 @@ def calc_curvature_for_lane(lane: Lane) -> List[float]:
             a = euclidean_distance(p1, p2)
             b = euclidean_distance(p2, p3)
             c = euclidean_distance(p3, p1)
-            A = 1/4 * math.sqrt(4*a*a*b*b - (a*a + b*b -c*c)**2) # https://en.wikipedia.org/wiki/Heron%27s_formula
+            try:
+                A = 1/4 * math.sqrt(4*a*a*b*b - (a*a + b*b -c*c)**2) # https://en.wikipedia.org/wiki/Heron%27s_formula
+            except ValueError: 
+                A = 0.0
             curvatures.append(4*A/(a*b*c)) # https://en.wikipedia.org/wiki/Menger_curvature
     return curvatures
 
@@ -97,36 +100,36 @@ def find_lane_piece_for_coord(lane: Lane, coordinate: Vector3d, return_progress:
     return a
 
 
-def convert_to_moving_object_state(object: MovingObject):
-    moving_object_state = MovingObjectState()
-    moving_object_state.simulator_id = object.id.value
-    moving_object_state.object_type = object.type 
-    moving_object_state.dimensions = object.base.dimension
-    moving_object_state.location = object.base.position
-    moving_object_state.velocity = object.base.velocity
-    moving_object_state.acceleration = object.base.acceleration
-    moving_object_state.yaw_angle = object.base.orientation.yaw
-    moving_object_state.pitch_angle = object.base.orientation.pitch
-    moving_object_state.roll_angle = object.base.orientation.roll
-    moving_object_state.lane_ids = get_all_assigned_lane_ids(object)
+def convert_to_moving_object_state(object: MovingObject): #TODO: needs lanes as parameter
+    m_o_s = MovingObjectState()
+    m_o_s.simulator_id = object.id.value
+    m_o_s.object_type = object.type 
+    m_o_s.dimensions = object.base.dimension
+    m_o_s.location = object.base.position
+    m_o_s.velocity = object.base.velocity
+    m_o_s.acceleration = object.base.acceleration
+    m_o_s.yaw_angle = object.base.orientation.yaw
+    m_o_s.pitch_angle = object.base.orientation.pitch
+    m_o_s.roll_angle = object.base.orientation.roll
+    m_o_s.lane_ids = get_all_assigned_lane_ids(object)
     light_state = object.vehicle_classification.light_state
-    moving_object_state.indicator_signal = light_state.indicator_state
-    moving_object_state.brake_light = light_state.brake_light_state
-    moving_object_state.front_fog_light = light_state.front_fog_light
-    moving_object_state.rear_fog_light = light_state.rear_fog_light
-    moving_object_state.head_light = light_state.head_light
-    moving_object_state.high_beam = light_state.high_beam
-    moving_object_state.reversing_light = light_state.reversing_light
-    moving_object_state.license_plate_illumination_rear = light_state.license_plate_illumination_rear
-    moving_object_state.emergency_vehicle_illumination = light_state.emergency_vehicle_illumination
-    moving_object_state.service_vehicle_illumination = light_state.service_vehicle_illumination
+    m_o_s.indicator_signal = light_state.indicator_state
+    m_o_s.brake_light = light_state.brake_light_state
+    m_o_s.front_fog_light = light_state.front_fog_light
+    m_o_s.rear_fog_light = light_state.rear_fog_light
+    m_o_s.head_light = light_state.head_light
+    m_o_s.high_beam = light_state.high_beam
+    m_o_s.reversing_light = light_state.reversing_light
+    m_o_s.license_plate_illumination_rear = light_state.license_plate_illumination_rear
+    m_o_s.emergency_vehicle_illumination = light_state.emergency_vehicle_illumination
+    m_o_s.service_vehicle_illumination = light_state.service_vehicle_illumination
 
     #TODO: Replace 'None' with actual values
-    moving_object_state.heading_angle = None
-    moving_object_state.lane_position = None
-    moving_object_state.road_id = None
-    moving_object_state.road_s = None
-    return moving_object_state
+    m_o_s.heading_angle = None
+    m_o_s.lane_position = None
+    m_o_s.road_id = None
+    m_o_s.road_s = None
+    return m_o_s
 
 
 
@@ -166,7 +169,12 @@ class OSI3Extractor:
 #                    break
         #    print("----------------------------------------------------")
             print("How many moving objects: " + str(len(m_o_list)))                
-            self.current_state = State(m_o_list, [], self.host_vehicle_id)
+            s_o_list: list[StaticObstacle] = []
+            for object in ground_truth.stationary_object:
+                s_o = StaticObstacle(object.base.dimension, object.base.position) # TODO: Create Testcase
+                s_o_list.append(s_o)
+            print("How many stationary objects: " + str(len(s_o_list)))                
+            self.current_state = State(m_o_list, s_o_list, self.host_vehicle_id)
 
     def _get_ego_lane_id(self) -> int:
         if self.host_vehicle is None:
