@@ -1,6 +1,6 @@
 import sys
 import threading
-import random
+import math
 import time
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
@@ -39,7 +39,7 @@ class OSI3Extractor:
             self.host_vehicle_id = ground_truth.host_vehicle_id
             self.current_state = create_state(ground_truth)
             print("How many moving objects: " + str(len(self.current_state.moving_objects)))
-            print("How many stationary objects: " + str(len(self.current_state.stationary_obstacles)))                
+            print("How many stationary objects: " + str(len(self.current_state.stationary_obstacles)))
 
     def get_current_state(self) -> State:
         return self.current_state
