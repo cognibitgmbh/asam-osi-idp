@@ -7,7 +7,8 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_object_pb2 import MovingObject
-from typing import Dict, List, Optional
+from typing import Dict, Iterable, List, Optional
+from lane import LaneState
 
 from osi_iterator import UDPGroundTruthIterator
 from state import RoadState, MovingObjectState, StationaryObstacle, State
@@ -26,6 +27,7 @@ class OSI3Extractor:
     def __init__(self, ip_addr: str, port: int = 48198):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self.thread_target)
+        self.lane_states: dict[int, LaneState] = {}
     
     def start(self) -> threading.Thread:
         self.thread.start()
@@ -36,6 +38,7 @@ class OSI3Extractor:
         for ground_truth in self.ground_truth_iterator:
             if len(ground_truth.lane) != 0:
                 self.update_lanes(ground_truth.lane)
+                self.update_lane_states(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id
             self.current_state = create_state(ground_truth)
             print("How many moving objects: " + str(len(self.current_state.moving_objects)))
@@ -52,11 +55,16 @@ class OSI3Extractor:
             raise RuntimeError("Host vehicle has no assigned lane")
         return lane_id
 
+    def update_lane_states(self, gt: GroundTruth):
+        for lane in gt.lane:
+            id: int = lane.id.value
+            self.lane_states[id] = LaneState(gt, lane)
 
-    def update_lanes(self, new_lanes: Lane):
+    def update_lanes(self, new_lanes: Iterable[Lane]):
         for l in new_lanes:
-            self.lanes[l.id.value] = l
-            self.lane_curvatures[l.id.value] = calc_curvature_for_lane(l)
+            id: int = l.id.value
+            self.lanes[id] = l
+            self.lane_curvatures[id] = calc_curvature_for_lane(l)
 
     # TODO: lane type of neighbouring lanes
     def get_ego_lane_type(self) -> tuple[int, int]:
@@ -75,7 +83,7 @@ def main():
         sys.exit(1)
     osi_extractor = OSI3Extractor(sys.argv[1], int(sys.argv[2]))
     osi_extractor.start()
-    for i in range(100):
+    for _ in range(100):
         try:
             time.sleep(1)
         except RuntimeError as e:
