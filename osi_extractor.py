@@ -7,7 +7,7 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane
 
 from curvature import calc_curvature_for_lane
-from lane import LaneState
+from lane import LaneData
 from osi_iterator import UDPGroundTruthIterator
 from state import State
 from state_builder import create_state
@@ -17,7 +17,7 @@ class OSI3Extractor:
     def __init__(self, ip_addr: str, port: int = 48198):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self._thread_target)
-        self.lane_states: dict[int, LaneState] = {}
+        self.lane_data: dict[int, LaneData] = {}
         self.lane_curvatures: dict[int, list[float]] = {}
         self._current_state: State = None
 
@@ -29,7 +29,7 @@ class OSI3Extractor:
         arising_state: State = None
         for ground_truth in self.ground_truth_iterator:
             if len(ground_truth.lane) != 0:
-                self.update_lane_states(ground_truth)
+                self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id
             self.current_state = create_state(ground_truth)
             print("How many moving objects: " + str(len(self.current_state.moving_objects)))
@@ -38,10 +38,10 @@ class OSI3Extractor:
     def current_state(self) -> State:
         return self._current_state
 
-    def update_lane_states(self, gt: GroundTruth):
+    def update_lane_data(self, gt: GroundTruth):
         for lane in gt.lane:
             id: int = lane.id.value
-            self.lane_states[id] = LaneState(gt, lane)
+            self.lane_data[id] = LaneData(gt, lane)
 
 
 def main():

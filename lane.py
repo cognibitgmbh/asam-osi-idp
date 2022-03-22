@@ -16,7 +16,7 @@ def get_lane_boundary_from_ground_truth(
     raise RuntimeError(f"Missing data for lane boundary {boundary_id}")
 
 
-class LaneState:
+class LaneData:
     def __init__(self, gt: GroundTruth, osi_lane: Lane):
         self.osi_lane = osi_lane
         left_boundaries = [

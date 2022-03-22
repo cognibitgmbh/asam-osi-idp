@@ -8,7 +8,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lane import LaneState
+from lane import LaneData
 
 
 @dataclass(init=False)
@@ -30,9 +30,9 @@ class RoadState:
     road_on_junction: bool
     road_in_main_direction: bool
 
-    def __init__(self, lanes: dict[int, LaneState], mos: MovingObjectState):
+    def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
         osi_lane_classification = (
-            lanes[mos.lane_ids[0]].osi_lane.classification
+            lane_data[mos.lane_ids[0]].osi_lane.classification
         )
         self.lane_type = (
             osi_lane_classification.type, osi_lane_classification.subtype
