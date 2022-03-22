@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from osi3.osi_common_pb2 import Dimension3d, Vector3d
 from osi3.osi_object_pb2 import MovingObject
-from osi3.osi_trafficlight_pb2 import TrafficLight, TrafficSign
+from osi3.osi_trafficlight_pb2 import TrafficLight
+from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
+from lane import LaneState
 
 
-@dataclass
+@dataclass(init=False)
 class RoadState:
     curvature: float
     curvature_change: float
@@ -25,6 +29,17 @@ class RoadState:
     road_on_highway: bool
     road_on_junction: bool
     road_in_main_direction: bool
+
+    def __init__(self, lanes: dict[int, LaneState], mos: MovingObjectState):
+        osi_lane_classification = (
+            lanes[mos.lane_ids[0]].osi_lane.classification
+        )
+        self.lane_type = (
+            osi_lane_classification.type, osi_lane_classification.subtype
+        )
+        # TODO: somehow deal with this "magic constant"
+        self.road_on_highway = self.lane_type[0] == 4
+        # TODO: initialize everythin else
 
 
 @dataclass(init=False)
