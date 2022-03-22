@@ -31,8 +31,10 @@ class RoadState:
     road_in_main_direction: bool
 
     def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
+        ego_lane_data = lane_data[mos.lane_ids[0]]
+        self.lane_width = ego_lane_data.width_at_position(mos.location)
         osi_lane_classification = (
-            lane_data[mos.lane_ids[0]].osi_lane.classification
+            ego_lane_data.osi_lane.classification
         )
         self.lane_type = (
             osi_lane_classification.type, osi_lane_classification.subtype
