@@ -3,6 +3,7 @@ from osi3.osi_lane_pb2 import Lane, LaneBoundary
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
+from curvature import calc_curvature_for_lane
 from geometry import osi_vector_to_ndarray, closest_projected_point
 
 
@@ -19,6 +20,7 @@ def get_lane_boundary_from_ground_truth(
 class LaneData:
     def __init__(self, gt: GroundTruth, osi_lane: Lane):
         self.osi_lane = osi_lane
+        self.curvature_list = calc_curvature_for_lane(self.osi_lane)
         left_boundaries = [
             LaneBoundaryState(gt, id.value)
             for id in self.osi_lane.classification.left_lane_boundary_id

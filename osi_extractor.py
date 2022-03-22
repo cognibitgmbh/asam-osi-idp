@@ -18,7 +18,6 @@ class OSI3Extractor:
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.thread = threading.Thread(target=self._thread_target)
         self.lane_data: dict[int, LaneData] = {}
-        self.lane_curvatures: dict[int, list[float]] = {}
         self._current_state: State = None
 
     def start(self) -> threading.Thread:
