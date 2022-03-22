@@ -41,6 +41,9 @@ class OSI3Extractor:
             print("How many moving objects: " + str(len(self.current_state.moving_objects)))
             print("How many stationary objects: " + str(len(self.current_state.stationary_obstacles)))                
 
+    def get_current_state(self) -> State:
+        return self.current_state
+
     def _get_ego_lane_id(self) -> int:
         if self.host_vehicle is None:
             raise RuntimeError("No host vehicle")
