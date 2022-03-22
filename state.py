@@ -39,7 +39,7 @@ class RoadState:
         )
         # TODO: somehow deal with this "magic constant"
         self.road_on_highway = self.lane_type[0] == 4
-        # TODO: initialize everythin else
+        # TODO: initialize everything else
 
 
 @dataclass(init=False)

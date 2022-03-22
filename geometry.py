@@ -49,8 +49,15 @@ def closest_projected_point(
 ) -> tuple[np.ndarray, Union[float, np.ndarray]]:
     t, v = project_onto_line_segment(p, seg_1, seg_2)
     mask = (0 <= t) & (t <= 1)
-    t_masked = t[mask]
-    projected = seg_1[mask, :] + t_masked * v[mask, :]
+    projected: np.array
+    t_masked: np.array
+    if not np.any(mask):
+        # if p can't be projected, simply return the closest segment start
+        t_masked = t
+        projected = seg_1
+    else:
+        t_masked = t[mask]
+        projected = seg_1[mask, :] + t_masked * v[mask, :]
     w = projected - p
     distance_squared = np.einsum("ij,ij->i", w, w)
     i = np.argmin(distance_squared)
