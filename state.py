@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
 from osi3.osi_common_pb2 import Dimension3d, Vector3d
-from osi3.osi_trafficlight_pb2 import TrafficLight
-from osi3.osi_trafficsign_pb2 import TrafficSign
+from osi3.osi_object_pb2 import MovingObject
+from osi3.osi_trafficlight_pb2 import TrafficLight, TrafficSign
+
+from deprecated_handler import get_all_assigned_lane_ids
 
 
 @dataclass
@@ -25,14 +27,12 @@ class RoadState:
     road_in_main_direction: bool
 
 
-@dataclass
+@dataclass(init=False)
 class MovingObjectState:
-    def __init__(self):
-        pass #TODO: make it possible to create object without all arguments
     simulator_id: int
     object_type: int
-    dimensions: Dimension3d #TODO: is called dimension without s in osi
-    location: Vector3d #TODO: is called position in osi
+    dimensions: Dimension3d  # TODO: is called dimension without s in osi
+    location: Vector3d  # TODO: is called position in osi
     velocity: Vector3d
     acceleration: Vector3d
     yaw_angle: float
@@ -54,6 +54,34 @@ class MovingObjectState:
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
     road_state: RoadState
+
+    def __init__(self, mo: MovingObject):
+        self.simulator_id = mo.id.value
+        self.object_type = mo.type
+        self.dimensions = mo.base.dimension
+        self.location = mo.base.position
+        self.velocity = mo.base.velocity
+        self.acceleration = mo.base.acceleration
+        self.yaw_angle = mo.base.orientation.yaw
+        self.pitch_angle = mo.base.orientation.pitch
+        self.roll_angle = mo.base.orientation.roll
+        self.lane_ids = get_all_assigned_lane_ids(mo)
+        light_state = mo.vehicle_classification.light_state
+        self.indicator_signal = light_state.indicator_state
+        self.brake_light = light_state.brake_light_state
+        self.front_fog_light = light_state.front_fog_light
+        self.rear_fog_light = light_state.rear_fog_light
+        self.head_light = light_state.head_light
+        self.high_beam = light_state.high_beam
+        self.reversing_light = light_state.reversing_light
+        self.license_plate_illumination_rear = light_state.license_plate_illumination_rear
+        self.emergency_vehicle_illumination = light_state.emergency_vehicle_illumination
+        self.service_vehicle_illumination = light_state.service_vehicle_illumination
+        # TODO: Replace 'None' with actual values
+        self.heading_angle = None
+        self.lane_position = None
+        self.road_id = None
+        self.road_s = None
 
 
 @dataclass
