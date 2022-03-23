@@ -48,15 +48,17 @@ class LaneData:
                 self.right_end_points[i, :] = end
                 i += 1
 
-    def width_at_position(self, position: Vector3d) -> float:
-        p = osi_vector_to_ndarray(position)
+    def boundary_points_for_position(
+        self,
+        position: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
         left, _, _ = closest_projected_point(
-            p, self.left_start_points, self.left_end_points,
+            position, self.left_start_points, self.left_end_points,
         )
         right, _, _ = closest_projected_point(
-            p, self.right_start_points, self.right_end_points,
+            position, self.right_start_points, self.right_end_points,
         )
-        return np.linalg.norm(right - left)
+        return left, right
 
 
 class LaneBoundaryState:

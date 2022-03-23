@@ -1,12 +1,9 @@
 import sys
 import threading
 import time
-from typing import Iterable
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
-from osi3.osi_lane_pb2 import Lane
 
-from curvature import calc_curvature_for_lane
 from lane import LaneData
 from osi_iterator import UDPGroundTruthIterator
 from state import State
