@@ -1,3 +1,4 @@
+from typing import Sequence
 import numpy as np
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
 from osi3.osi_common_pb2 import Vector3d
@@ -20,7 +21,30 @@ def get_lane_boundary_from_ground_truth(
 class LaneData:
     def __init__(self, gt: GroundTruth, osi_lane: Lane):
         self.osi_lane = osi_lane
+        reverse_direction = not (
+            self.osi_lane.classification.centerline_is_driving_direction
+        )
+        self._init_boundaries(reverse_direction, gt)
+        self._init_centerline(reverse_direction)
         self.curvature_list = calc_curvature_for_lane(self.osi_lane)
+
+    def _init_centerline(
+        self,
+        reverse_direction: bool,
+    ):
+        centerline: Sequence[Vector3d] = self.osi_lane.classification.centerline
+        n_points = len(centerline)
+        self.centerline_matrix = np.empty((n_points, 3))
+        for i in range(n_points):
+            osi_vector = (centerline[i] if not reverse_direction
+                          else centerline[n_points - 1 - i])
+            self.centerline_matrix[i, :] = osi_vector_to_ndarray(osi_vector)
+
+    def _init_boundaries(
+        self,
+        reverse_direction: bool,
+        gt: GroundTruth,
+    ):
         left_boundaries = [
             LaneBoundaryData(gt, id.value)
             for id in self.osi_lane.classification.left_lane_boundary_id
@@ -47,6 +71,13 @@ class LaneData:
                 self.right_start_points[i, :] = start
                 self.right_end_points[i, :] = end
                 i += 1
+        if reverse_direction:
+            self.left_start_points, self.right_start_points = (
+                self.right_start_points, self.left_start_points
+            )
+            self.left_end_points, self.right_end_points = (
+                self.right_end_points, self.left_end_points
+            )
 
     def boundary_points_for_position(
         self,
