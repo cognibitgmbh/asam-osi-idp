@@ -50,10 +50,10 @@ class LaneData:
 
     def width_at_position(self, position: Vector3d) -> float:
         p = osi_vector_to_ndarray(position)
-        left, _ = closest_projected_point(
+        left, _, _ = closest_projected_point(
             p, self.left_start_points, self.left_end_points,
         )
-        right, _ = closest_projected_point(
+        right, _, _ = closest_projected_point(
             p, self.right_start_points, self.right_end_points,
         )
         return np.linalg.norm(right - left)

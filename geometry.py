@@ -46,22 +46,28 @@ def closest_projected_point(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray,
-) -> tuple[np.ndarray, Union[float, np.ndarray]]:
+) -> tuple[np.ndarray, float, int]:
     t, v = project_onto_line_segment(p, seg_1, seg_2)
-    mask = (0 <= t) & (t <= 1)
-    projected: np.array
-    t_masked: np.array
-    if not np.any(mask):
-        # if p can't be projected, simply return the closest segment start
-        t_masked = t
-        projected = seg_1
-    else:
-        t_masked = t[mask]
-        projected = seg_1[mask, :] + t_masked * v[mask, :]
-    w = projected - p
-    distance_squared = np.einsum("ij,ij->i", w, w)
+    relevant_indexes,  = np.nonzero((0 <= t) & (t <= 1))
+    if len(relevant_indexes) <= 0:
+        # determine the closest segment start
+        d = seg_1 - p
+        distance_squared = np.einsum("ij,ij->i", d, d)
+        min_i = np.argmin(distance_squared)
+        # also consider the final segment end
+        last_i = seg_2.shape[0] - 1
+        last_d = seg_2[last_i, :] - p
+        if np.dot(last_d, last_d) < distance_squared[min_i]:
+            return seg_2[last_i], 1.0, last_i
+        else:
+            return seg_1[min_i], 0.0, min_i
+    t_relevant = t[relevant_indexes]
+    projected = (seg_1[relevant_indexes, :]
+                 + t_relevant * v[relevant_indexes, :])
+    d = projected - p
+    distance_squared = np.einsum("ij,ij->i", d, d)
     i = np.argmin(distance_squared)
-    return projected[i], t_masked[i]
+    return projected[i], t_relevant[i], relevant_indexes[i]
 
 
 def main():
