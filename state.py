@@ -72,7 +72,7 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject):
+    def __init__(self, mo: MovingObject, lane_data: dict[int, LaneData]):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
@@ -99,6 +99,7 @@ class MovingObjectState:
         self.lane_position = None
         self.road_id = None
         self.road_s = None
+        self.road_state = RoadState(lane_data, self)
 
 
 @dataclass
