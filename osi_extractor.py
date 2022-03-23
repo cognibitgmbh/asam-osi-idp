@@ -9,6 +9,8 @@ from osi3.osi_lane_pb2 import Lane
 from curvature import calc_curvature_for_lane
 from lane import LaneData
 from osi_iterator import UDPGroundTruthIterator
+from output.driver_update import DriverUpdate
+from output.raw_update import RawUpdate
 from state import State
 from state_builder import create_state
 
@@ -41,6 +43,12 @@ class OSI3Extractor:
         for lane in gt.lane:
             id: int = lane.id.value
             self.lane_data[id] = LaneData(gt, lane)
+
+    def send_raw_update(self, raw_update: RawUpdate):
+        self.output.send_raw_update(raw_update)
+
+    def send_driver_update(self, driver_update: DriverUpdate):
+        self.output.send_driver_update(driver_update)
 
 
 def main():
