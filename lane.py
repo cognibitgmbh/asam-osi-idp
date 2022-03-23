@@ -22,11 +22,11 @@ class LaneData:
         self.osi_lane = osi_lane
         self.curvature_list = calc_curvature_for_lane(self.osi_lane)
         left_boundaries = [
-            LaneBoundaryState(gt, id.value)
+            LaneBoundaryData(gt, id.value)
             for id in self.osi_lane.classification.left_lane_boundary_id
         ]
         right_boundaries = [
-            LaneBoundaryState(gt, id.value)
+            LaneBoundaryData(gt, id.value)
             for id in self.osi_lane.classification.right_lane_boundary_id
         ]
         n_left_segments = sum(len(b.segments) for b in left_boundaries)
@@ -61,7 +61,7 @@ class LaneData:
         return left, right
 
 
-class LaneBoundaryState:
+class LaneBoundaryData:
     def __init__(self, gt: GroundTruth, boundary_id: int):
         self.osi_boundary = get_lane_boundary_from_ground_truth(
             gt, boundary_id,
