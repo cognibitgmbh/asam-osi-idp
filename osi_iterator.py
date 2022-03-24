@@ -1,4 +1,6 @@
 import abc
+import os
+import select
 import socket
 import struct
 import time
@@ -16,24 +18,18 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 #   - seemingly, this is 8192 for everything but the last datagram
 
 class OSI3GroundTruthIterator(abc.ABC):
-    
-    @abc.abstractmethod
-    def __enter__(self):
-        pass
-
-    @abc.abstractmethod
-    def __exit__(self, exc_type, *args) -> bool:
-        pass
 
     @abc.abstractmethod
     def __iter__(self) -> Iterator[GroundTruth]:
         pass
 
+
 class UDPGroundTruthIterator(OSI3GroundTruthIterator):
-    
+
     def __init__(self, bind_address: str, port: int):
+        self.bind_address = bind_address
+        self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket.bind((bind_address, port))
 
     def read(self, n: int = 2**14) -> bytes:
         data = self.socket.recv(n)
@@ -42,20 +38,28 @@ class UDPGroundTruthIterator(OSI3GroundTruthIterator):
     def parse_int(self, data: bytes) -> int:
         return int.from_bytes(data, byteorder='little', signed=True)
 
-    def __enter__(self):
-        pass
+    def open(self):
+        self.socket.bind((self.bind_address, self.port))
+        self.pipe_read, self.pipe_write = os.pipe()
 
-    def __exit__(self, exc_type, *args) -> bool:
-        self.socket.close()
-        return exc_type is None
+    def close(self):
+        os.close(self.pipe_write)
 
     def __iter__(self) -> Iterator[GroundTruth]:
         while True:
-            expected_slice_id : int = 1
+            expected_slice_id: int = 1
             message_bytes = b""
             while True:
+                ready, _, _ = select.select(
+                    [self.socket, self.pipe_read], [], [])
+                if self.pipe_read in ready:
+                    os.close(self.pipe_read)
+                    self.socket.close()
+                    return
+                elif self.socket not in ready:
+                    continue
                 udp_package = self.read()
-                slice_id: int = self.parse_int(udp_package[0:4]) 
+                slice_id: int = self.parse_int(udp_package[0:4])
                 last_slice = (slice_id == -expected_slice_id)
                 slice_id = abs(slice_id)
                 if slice_id == expected_slice_id:
@@ -64,10 +68,11 @@ class UDPGroundTruthIterator(OSI3GroundTruthIterator):
                         print("throwing away current groundtruth bytes")
                         print("length field does not conform with udp length")
                         break
-                    message_bytes += udp_package[8:] 
+                    message_bytes += udp_package[8:]
                 else:
                     print("throwing away current groundtruth bytes")
-                    print("received slice id:" + str(slice_id) + "  expected:" + str(expected_slice_id))
+                    print("received slice id:" + str(slice_id) +
+                          "  expected:" + str(expected_slice_id))
                     break
                 if last_slice:
                     message = GroundTruth()
@@ -107,10 +112,8 @@ class FileGroundTruthIterator(OSI3GroundTruthIterator):
         self.path = path
         self.file: Optional[TextIO] = None
 
-
     def read(self, n: int) -> bytes:
         if self.file is None:
             raise RuntimeError("File is not open")
         time.sleep(1)
         return self.file.read(n)
-

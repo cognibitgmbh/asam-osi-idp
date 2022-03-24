@@ -2,4 +2,6 @@ __pycache__
 venv
 *.swp
 .vscode
+traffic_update_trace.osi
+.env
 

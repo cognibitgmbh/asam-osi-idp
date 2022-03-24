@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 from typing import Optional
 
+
 @dataclass
 class DriverUpdate:
+    id: int
+
     steer: float
-    brake: float 
+    brake: float
     throttle: float
 
-    indicator_signal: Optional[int]
-    brake_light: Optional[int]
+    indicator_state: Optional[int]
+    brake_light_state: Optional[int]
     front_fog_light: Optional[int]
     rear_fog_light: Optional[int]
     head_light: Optional[int]
@@ -18,26 +21,28 @@ class DriverUpdate:
     emergency_vehicle_illumination: Optional[int]
     service_vehicle_illumination: Optional[int]
 
-    def __init__(self, 
-            steer: float, 
-            brake: float, 
-            throttle: float, 
-            indicator_signal: Optional[int]=None, 
-            brake_light: Optional[int]=None,
-            front_fog_light: Optional[int]=None,
-            rear_fog_light: Optional[int]=None,
-            head_light: Optional[int]=None,
-            high_beam: Optional[int]=None,
-            reversing_light: Optional[int]=None,
-            license_plate_illumination_rear: Optional[int]=None,
-            emergency_vehicle_illumination: Optional[int]=None,
-            service_vehicle_illumination: Optional[int]=None):
+    def __init__(self,
+                 id: int,
+                 steer: float,
+                 brake: float,
+                 throttle: float,
+                 indicator_state: Optional[int] = None,
+                 brake_light_state: Optional[int] = None,
+                 front_fog_light: Optional[int] = None,
+                 rear_fog_light: Optional[int] = None,
+                 head_light: Optional[int] = None,
+                 high_beam: Optional[int] = None,
+                 reversing_light: Optional[int] = None,
+                 license_plate_illumination_rear: Optional[int] = None,
+                 emergency_vehicle_illumination: Optional[int] = None,
+                 service_vehicle_illumination: Optional[int] = None):
 
+        self.id = id
         self.steer = steer
         self.brake = brake
         self.throttle = throttle
-        self.indicator_signal = indicator_signal 
-        self.brake_light = brake_light,
+        self.indicator_state = indicator_state
+        self.brake_light_state = brake_light_state
         self.front_fog_light = front_fog_light
         self.rear_fog_light = rear_fog_light
         self.head_light = head_light
