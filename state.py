@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from geometry import osi_vector_to_ndarray
 
+import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
 from osi3.osi_object_pb2 import MovingObject
 from osi3.osi_trafficlight_pb2 import TrafficLight
@@ -16,6 +18,7 @@ class RoadState:
     curvature: float
     curvature_change: float
     lane_width: float
+    lane_position: float
     distance_to_lane_end: float
     distance_to_ramp: float
     distance_to_next_exit: float
@@ -31,8 +34,21 @@ class RoadState:
     road_in_main_direction: bool
 
     def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
+        ego_position = osi_vector_to_ndarray(mos.location)
         ego_lane_data = lane_data[mos.lane_ids[0]]
-        self.lane_width = ego_lane_data.width_at_position(mos.location)
+        centerline_projection = ego_lane_data.project_onto_centerline(
+            ego_position,
+        )
+        self.distance_to_lane_end = ego_lane_data.distance_to_end(
+            centerline_projection,
+        )
+        ego_lane_left, ego_lane_right = (
+            ego_lane_data.boundary_points_for_position(ego_position)
+        )
+        self.lane_width = np.linalg.norm(ego_lane_left - ego_lane_right)
+        self.lane_position = (
+            np.linalg.norm(ego_position - ego_lane_left) / self.lane_width
+        )
         osi_lane_classification = (
             ego_lane_data.osi_lane.classification
         )
@@ -55,7 +71,6 @@ class MovingObjectState:
     orientation: Orientation3d
     heading_angle: float
     lane_ids: list[int]
-    lane_position: float
     road_id: int
     road_s: float
     indicator_signal: int
@@ -70,7 +85,7 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject):
+    def __init__(self, mo: MovingObject, lane_data: dict[int, LaneData]):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
@@ -95,6 +110,7 @@ class MovingObjectState:
         self.lane_position = None
         self.road_id = None
         self.road_s = None
+        self.road_state = RoadState(lane_data, self)
 
 
 @dataclass

@@ -1,10 +1,11 @@
+from typing import Sequence
 import numpy as np
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
 from curvature import calc_curvature_for_lane
-from geometry import osi_vector_to_ndarray, closest_projected_point
+from geometry import ProjectionResult, osi_vector_to_ndarray, closest_projected_point
 
 
 def get_lane_boundary_from_ground_truth(
@@ -20,13 +21,40 @@ def get_lane_boundary_from_ground_truth(
 class LaneData:
     def __init__(self, gt: GroundTruth, osi_lane: Lane):
         self.osi_lane = osi_lane
+        reverse_direction = not (
+            self.osi_lane.classification.centerline_is_driving_direction
+        )
+        self._init_boundaries(reverse_direction, gt)
+        self._init_centerline(reverse_direction)
         self.curvature_list = calc_curvature_for_lane(self.osi_lane)
+
+    def _init_centerline(
+        self,
+        reverse_direction: bool,
+    ):
+        centerline: Sequence[Vector3d] = self.osi_lane.classification.centerline
+        n_points = len(centerline)
+        self.centerline_matrix = np.empty((n_points, 3))
+        for i in range(n_points):
+            osi_vector = (centerline[i] if not reverse_direction
+                          else centerline[n_points - 1 - i])
+            self.centerline_matrix[i, :] = osi_vector_to_ndarray(osi_vector)
+        self.centerline_distances = np.linalg.norm(
+            self.centerline_matrix[1:, :] - self.centerline_matrix[:-1, :],
+            axis=1,
+        )
+
+    def _init_boundaries(
+        self,
+        reverse_direction: bool,
+        gt: GroundTruth,
+    ):
         left_boundaries = [
-            LaneBoundaryState(gt, id.value)
+            LaneBoundaryData(gt, id.value)
             for id in self.osi_lane.classification.left_lane_boundary_id
         ]
         right_boundaries = [
-            LaneBoundaryState(gt, id.value)
+            LaneBoundaryData(gt, id.value)
             for id in self.osi_lane.classification.right_lane_boundary_id
         ]
         n_left_segments = sum(len(b.segments) for b in left_boundaries)
@@ -47,19 +75,43 @@ class LaneData:
                 self.right_start_points[i, :] = start
                 self.right_end_points[i, :] = end
                 i += 1
+        if reverse_direction:
+            self.left_start_points, self.right_start_points = (
+                self.right_start_points, self.left_start_points
+            )
+            self.left_end_points, self.right_end_points = (
+                self.right_end_points, self.left_end_points
+            )
 
-    def width_at_position(self, position: Vector3d) -> float:
-        p = osi_vector_to_ndarray(position)
-        left, _ = closest_projected_point(
-            p, self.left_start_points, self.left_end_points,
+    def boundary_points_for_position(
+        self,
+        position: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        left = closest_projected_point(
+            position, self.left_start_points, self.left_end_points,
+        ).projected_point
+        right = closest_projected_point(
+            position, self.right_start_points, self.right_end_points,
+        ).projected_point
+        return left, right
+
+    def project_onto_centerline(self, position: np.ndarray) -> ProjectionResult:
+        return closest_projected_point(
+            position,
+            self.centerline_matrix[:-1, :],
+            self.centerline_matrix[1:, :],
         )
-        right, _ = closest_projected_point(
-            p, self.right_start_points, self.right_end_points,
+
+    def distance_to_end(self, proj_res: ProjectionResult) -> float:
+        distance = (self.centerline_distances[proj_res.segment_index]
+                    * (1 - proj_res.segment_progress))
+        distance += np.sum(
+            self.centerline_distances[proj_res.segment_index+1:],
         )
-        return np.linalg.norm(right - left)
+        return distance
 
 
-class LaneBoundaryState:
+class LaneBoundaryData:
     def __init__(self, gt: GroundTruth, boundary_id: int):
         self.osi_boundary = get_lane_boundary_from_ground_truth(
             gt, boundary_id,
