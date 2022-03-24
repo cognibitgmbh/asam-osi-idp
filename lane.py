@@ -5,7 +5,7 @@ from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
 from curvature import calc_curvature_for_lane
-from geometry import osi_vector_to_ndarray, closest_projected_point
+from geometry import ProjectionResult, osi_vector_to_ndarray, closest_projected_point
 
 
 def get_lane_boundary_from_ground_truth(
@@ -39,6 +39,10 @@ class LaneData:
             osi_vector = (centerline[i] if not reverse_direction
                           else centerline[n_points - 1 - i])
             self.centerline_matrix[i, :] = osi_vector_to_ndarray(osi_vector)
+        self.centerline_distances = np.linalg.norm(
+            self.centerline_matrix[1:, :] - self.centerline_matrix[:-1, :],
+            axis=1,
+        )
 
     def _init_boundaries(
         self,
@@ -90,6 +94,21 @@ class LaneData:
             position, self.right_start_points, self.right_end_points,
         ).projected_point
         return left, right
+
+    def project_onto_centerline(self, position: np.ndarray) -> ProjectionResult:
+        return closest_projected_point(
+            position,
+            self.centerline_matrix[:-1, :],
+            self.centerline_matrix[1:, :],
+        )
+
+    def distance_to_end(self, proj_res: ProjectionResult) -> float:
+        distance = (self.centerline_distances[proj_res.segment_index]
+                    * (1 - proj_res.segment_progress))
+        distance += np.sum(
+            self.centerline_distances[proj_res.segment_index+1:],
+        )
+        return distance
 
 
 class LaneBoundaryData:

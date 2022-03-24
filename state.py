@@ -36,6 +36,12 @@ class RoadState:
     def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
         ego_position = osi_vector_to_ndarray(mos.location)
         ego_lane_data = lane_data[mos.lane_ids[0]]
+        centerline_projection = ego_lane_data.project_onto_centerline(
+            ego_position,
+        )
+        self.distance_to_lane_end = ego_lane_data.distance_to_end(
+            centerline_projection,
+        )
         ego_lane_left, ego_lane_right = (
             ego_lane_data.boundary_points_for_position(ego_position)
         )
