@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from geometry import osi_vector_to_ndarray
 
 import numpy as np
-from osi3.osi_common_pb2 import Dimension3d, Vector3d
+from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
 from osi3.osi_object_pb2 import MovingObject
 from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
@@ -68,9 +68,7 @@ class MovingObjectState:
     location: Vector3d  # TODO: is called position in osi
     velocity: Vector3d
     acceleration: Vector3d
-    yaw_angle: float
-    pitch_angle: float
-    roll_angle: float
+    orientation: Orientation3d
     heading_angle: float
     lane_ids: list[int]
     road_id: int
@@ -94,9 +92,7 @@ class MovingObjectState:
         self.location = mo.base.position
         self.velocity = mo.base.velocity
         self.acceleration = mo.base.acceleration
-        self.yaw_angle = mo.base.orientation.yaw
-        self.pitch_angle = mo.base.orientation.pitch
-        self.roll_angle = mo.base.orientation.roll
+        self.orientation = mo.base.orientation
         self.lane_ids = get_all_assigned_lane_ids(mo)
         light_state = mo.vehicle_classification.light_state
         self.indicator_signal = light_state.indicator_state
