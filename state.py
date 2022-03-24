@@ -57,6 +57,7 @@ class RoadState:
         )
         # TODO: somehow deal with this "magic constant"
         self.road_on_highway = self.lane_type[0] == 4
+        _, _, self.road_z = centerline_projection.projected_point
         # TODO: initialize everything else
 
 
