@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import math
 from typing import Union
 
@@ -14,6 +15,13 @@ def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) ->
 
 def osi_vector_to_ndarray(vec: Vector3d) -> np.ndarray:
     return np.array([vec.x, vec.y, vec.z])
+
+
+@dataclass
+class ProjectionResult:
+    projected_point: np.ndarray
+    segment_index: int
+    segment_progress: float
 
 
 def project_onto_line_segment(
@@ -46,7 +54,7 @@ def closest_projected_point(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray,
-) -> tuple[np.ndarray, float, int]:
+) -> ProjectionResult:
     t, v = project_onto_line_segment(p, seg_1, seg_2)
     relevant_indexes,  = np.nonzero((0 <= t) & (t <= 1))
     if len(relevant_indexes) <= 0:
@@ -67,7 +75,11 @@ def closest_projected_point(
     d = projected - p
     distance_squared = np.einsum("ij,ij->i", d, d)
     i = np.argmin(distance_squared)
-    return projected[i], t_relevant[i], relevant_indexes[i]
+    return ProjectionResult(
+        projected_point=projected[i],
+        segment_index=relevant_indexes[i],
+        segment_progress=t_relevant[i],
+    )
 
 
 def main():
