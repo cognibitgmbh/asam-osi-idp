@@ -83,12 +83,12 @@ class LaneData:
         self,
         position: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
-        left, _, _ = closest_projected_point(
+        left = closest_projected_point(
             position, self.left_start_points, self.left_end_points,
-        )
-        right, _, _ = closest_projected_point(
+        ).projected_point
+        right = closest_projected_point(
             position, self.right_start_points, self.right_end_points,
-        )
+        ).projected_point
         return left, right
 
 
