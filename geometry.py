@@ -24,7 +24,7 @@ class ProjectionResult:
     segment_progress: float
 
 
-def project_onto_line_segment(
+def project_onto_line_segments(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray
@@ -52,25 +52,26 @@ def project_onto_line_segment(
 
 def closest_projected_point(
     p: np.ndarray,
-    seg_1: np.ndarray,
-    seg_2: np.ndarray,
+    segment_points: np.ndarray,
 ) -> ProjectionResult:
-    t, v = project_onto_line_segment(p, seg_1, seg_2)
+    start = segment_points[:-1, :]
+    end = segment_points[1:, :]
+    t, v = project_onto_line_segments(p, start, end)
     relevant_indexes,  = np.nonzero((0 <= t) & (t <= 1))
     if len(relevant_indexes) <= 0:
         # determine the closest segment start
-        d = seg_1 - p
+        d = start - p
         distance_squared = np.einsum("ij,ij->i", d, d)
         min_i = np.argmin(distance_squared)
         # also consider the final segment end
-        last_i = seg_2.shape[0] - 1
-        last_d = seg_2[last_i, :] - p
+        last_i = end.shape[0] - 1
+        last_d = end[last_i, :] - p
         if np.dot(last_d, last_d) < distance_squared[min_i]:
-            return seg_2[last_i], 1.0, last_i
+            return end[last_i], 1.0, last_i
         else:
-            return seg_1[min_i], 0.0, min_i
+            return start[min_i], 0.0, min_i
     t_relevant = t[relevant_indexes]
-    projected = (seg_1[relevant_indexes, :]
+    projected = (start[relevant_indexes, :]
                  + t_relevant * v[relevant_indexes, :])
     d = projected - p
     distance_squared = np.einsum("ij,ij->i", d, d)
@@ -80,15 +81,3 @@ def closest_projected_point(
         segment_index=relevant_indexes[i],
         segment_progress=t_relevant[i],
     )
-
-
-def main():
-    p = np.array([0, 0, 0])
-    s1 = np.array([[0, -1, -1], [1, -1, 2]])
-    s2 = np.array([[1, 0, 1], [1, 3, 2]])
-    t = project_onto_line_segment(p, s1, s2)
-    print(t)
-
-
-if __name__ == "__main__":
-    main()
