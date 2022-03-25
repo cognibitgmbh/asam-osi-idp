@@ -8,6 +8,7 @@ from osi3.osi_groundtruth_pb2 import GroundTruth
 from lane import LaneData
 from osi_iterator import UDPGroundTruthIterator
 from output.driver_update import DriverUpdate
+from output.esmini_output_sender import EsminiOutputSender
 from output.osi_trace_output_sender import OsiTraceOutputSender
 from output.raw_update import RawUpdate
 from state import State
@@ -24,8 +25,7 @@ class OSI3Extractor:
         if environ.get('OUTPUT_FILE') is not None:
             self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
         elif environ.get('OUTPUT_PORT') is not None and environ['OUTPUT_ADDRESS'] is not None:
-            raise RuntimeError("Not implementet yet")
-            self.output = EsminiOutputSender(int(environ['OUTPUT_ADDRESS']),
+            self.output = EsminiOutputSender(environ['OUTPUT_ADDRESS'],
                                              int(environ['OUTPUT_PORT']))
         else:
             self.output = None

@@ -7,7 +7,6 @@ from osi3.osi_common_pb2 import Vector3d, Orientation3d
 @dataclass
 class RawUpdate:
     id: int
-    vehicle_type: int
     position: Vector3d
     orientation: Orientation3d
 
@@ -23,7 +22,7 @@ class RawUpdate:
     service_vehicle_illumination: Optional[int]
 
     def __init__(self,
-                id: int,
+                 id: int,
                  position: Vector3d,
                  orientation: Orientation3d,
                  indicator_state: Optional[int] = None,
