@@ -52,11 +52,11 @@ class OSI3Extractor:
             if len(ground_truth.lane) != 0:
                 self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id
-            self.current_state = create_state(ground_truth, self.lane_data)
+            self._current_state = create_state(ground_truth, self.lane_data)
             print("How many moving objects: " +
-                  str(len(self.current_state.moving_objects)))
+                  str(len(self._current_state.moving_objects)))
             print("How many stationary objects: " +
-                  str(len(self.current_state.stationary_obstacles)))
+                  str(len(self._current_state.stationary_obstacles)))
 
     def current_state(self) -> State:
         return self._current_state

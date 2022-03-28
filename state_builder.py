@@ -7,7 +7,7 @@ from state import MovingObjectState, State, RoadState, StationaryObstacle
 def create_state(ground_truth: GroundTruth, lane_data: dict[int, LaneData]):
     m_o_list = _create_moving_object_states(ground_truth, lane_data)
     s_o_list = _create_static_obstacle_states(ground_truth)
-    return State(m_o_list, s_o_list, ground_truth.host_vehicle_id)
+    return State(m_o_list, s_o_list, ground_truth.host_vehicle_id.value)
 
 def _create_moving_object_states(
     ground_truth: GroundTruth,
