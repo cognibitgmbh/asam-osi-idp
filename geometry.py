@@ -67,12 +67,20 @@ def closest_projected_point(
         last_i = end.shape[0] - 1
         last_d = end[last_i, :] - p
         if np.dot(last_d, last_d) < distance_squared[min_i]:
-            return end[last_i], 1.0, last_i
+            return ProjectionResult(
+                projected_point=end[last_i],
+                segment_index=last_i,
+                segment_progress=1.0
+            )
         else:
-            return start[min_i], 0.0, min_i
+            return ProjectionResult(
+                projected_point=start[min_i],
+                segment_index=min_i,
+                segment_progress=0.0
+            )
     t_relevant = t[relevant_indexes]
     projected = (start[relevant_indexes, :]
-                 + t_relevant * v[relevant_indexes, :])
+                 + np.expand_dims(t_relevant, axis=-1) * v[relevant_indexes, :])
     d = projected - p
     distance_squared = np.einsum("ij,ij->i", d, d)
     i = np.argmin(distance_squared)
