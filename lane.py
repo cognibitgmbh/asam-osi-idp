@@ -92,6 +92,8 @@ class LaneData:
         return closest_projected_point(position, self.centerline_matrix)
 
     def distance_to_end(self, proj_res: ProjectionResult) -> float:
+        if proj_res.segment_index >= len(self.centerline_distances):
+            return 0.0
         distance = (self.centerline_distances[proj_res.segment_index]
                     * (1 - proj_res.segment_progress))
         distance += np.sum(
