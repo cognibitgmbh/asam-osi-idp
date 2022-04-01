@@ -1,16 +1,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from geometry import angle_of_segment, osi_vector_to_ndarray
+from typing import Generic, Optional, TypeVar
 
 import numpy as np
-from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
+from osi3.osi_common_pb2 import Dimension3d, Orientation3d, Vector3d
 from osi3.osi_object_pb2 import MovingObject
 from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lane import LaneData
+from geometry import ProjectionResult, angle_of_segment, osi_vector_to_ndarray
+from lane import LaneData, NeighboringLanes
+
+T = TypeVar("T")
+
+
+@dataclass
+class NeighboringLaneSignal(Generic[T]):
+    current_lane: T
+    left_lane: Optional[T] = None
+    right_lane: Optional[T] = None
+
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -21,7 +32,7 @@ class RoadState:
     curvature_change: float
     lane_width: float
     lane_position: float
-    distance_to_lane_end: float
+    distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: float
     lane_markings: list[int]
@@ -39,7 +50,8 @@ class RoadState:
 
     def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
         ego_position = osi_vector_to_ndarray(mos.location)
-        ego_lane_data = lane_data[mos.lane_ids[0]] #TODO: What happens if we have no assigned lane
+        # TODO: What happens if we have no assigned lane
+        ego_lane_data = lane_data[mos.lane_ids[0]]
         centerline_projection = ego_lane_data.project_onto_centerline(
             ego_position,
         )
@@ -48,8 +60,14 @@ class RoadState:
         self.curvature_change = ego_lane_data.curvature.get_road_curvature_change(
             centerline_projection.segment_index
         )
-        self.distance_to_lane_end = ego_lane_data.distance_to_end(
-            centerline_projection,
+        neighboring_lanes = ego_lane_data.neighboring_lanes_for_position(
+            ego_position, lane_data,
+        )
+        self._init_distance_to_lane_end(
+            lane=ego_lane_data,
+            projection=centerline_projection,
+            neighboring_lanes=neighboring_lanes,
+            lane_dict=lane_data,
         )
         ego_lane_left, ego_lane_right = (
             ego_lane_data.boundary_points_for_position(ego_position)
@@ -75,6 +93,27 @@ class RoadState:
             self.relative_object_heading_angle = (
                 mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
         # TODO: initialize everything else
+
+    def _init_distance_to_lane_end(
+        self,
+        lane: LaneData,
+        projection: ProjectionResult,
+        neighboring_lanes: NeighboringLanes,
+        lane_dict: dict[int, LaneData],
+    ):
+        self.distance_to_lane_end = NeighboringLaneSignal(
+            current_lane=lane.distance_to_end(projection),
+        )
+        if neighboring_lanes.left_lane is not None:
+            left_data = lane_dict[neighboring_lanes.left_lane.lane_id]
+            self.distance_to_lane_end.left_lane = left_data.distance_to_end(
+                neighboring_lanes.left_lane.projection_result,
+            )
+        if neighboring_lanes.right_lane is not None:
+            right_data = lane_dict[neighboring_lanes.right_lane.lane_id]
+            self.distance_to_lane_end.right_lane = right_data.distance_to_end(
+                neighboring_lanes.right_lane.projection_result,
+            )
 
 
 @dataclass(init=False)
