@@ -4,7 +4,7 @@ from geometry import euclidean_distance
 import numpy as np
 
 
-class Curvatrure():
+class Curvature():
     def __init__(self, centerline: np.ndarray, distances: np.ndarray):
         #        self._curvature_list = np.array(self._calc_curvature_for_lane_slow(lane))
         self._curvature_list = self._calc_curvature_for_line(centerline)
@@ -13,8 +13,8 @@ class Curvatrure():
         self._curvature_change_list = self._calc_curvature_change_list(
             self._curvature_list, distances)
 
-    def get_road_curvature(self, segment_index: int, segment_process: float):
-        return self._curvature_list[segment_index]*(1-segment_process) + self._curvature_list[segment_index+1]*segment_process
+    def get_road_curvature(self, segment_index: int, segment_progress: float):
+        return self._curvature_list[segment_index]*(1-segment_progress) + self._curvature_list[segment_index+1]*segment_progress
 
     def get_road_curvature_change(self, segment_index: int):
         return self._curvature_change_list[segment_index]
@@ -42,9 +42,10 @@ class Curvatrure():
         )
         a_squared = np.square(a_np)
         b_squared = np.square(b_np)
+        c_squared = np.square(c_np)
         # https://en.wikipedia.org/wiki/Heron%27s_formula
         A = 1/4 * np.sqrt(np.maximum(0, 4*a_squared*b_squared -
-                          np.square(a_squared + b_squared - np.square(c_np))))
+                          np.square(a_squared + b_squared - c_squared)))
 
         ret_val = np.zeros((centerline.shape[0],))
         # https://en.wikipedia.org/wiki/Menger_curvature
