@@ -8,7 +8,7 @@ from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
 
-from curvature import Curvatrure
+from curvature import Curvature
 from geometry import (ProjectionResult, closest_projected_point,
                       osi_vector_to_ndarray)
 
@@ -44,7 +44,7 @@ class LaneData:
         )
         self._init_boundaries(gt)
         self._init_centerline()
-        self.curvature = Curvatrure(self.centerline_matrix, self.centerline_distances)
+        self.curvature = Curvature(self.centerline_matrix, self.centerline_distances)
 
     def _init_centerline(self):
         centerline: Sequence[Vector3d] = self.osi_lane.classification.centerline
@@ -98,7 +98,4 @@ class LaneData:
             self.centerline_distances[proj_res.segment_index+1:],
         )
         return distance
-
-    def get_curvature(self, proj_res: ProjectionResult) -> float:
-        return self._curvature.get_road_curvature(proj_res.segment_index, proj_res.segment_progress)
 
