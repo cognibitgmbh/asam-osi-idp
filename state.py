@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from geometry import osi_vector_to_ndarray
+from geometry import angle_of_segment, osi_vector_to_ndarray
 
 import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
@@ -11,6 +11,8 @@ from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
 from lane import LaneData
+
+YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
 
 @dataclass(init=False)
@@ -28,6 +30,8 @@ class RoadState:
     traffic_signs: list[TrafficSign]  # Based on sensor?
     traffic_lights: list[TrafficLight]  # Based on sensor?
     road_z: float
+    road_angle: float
+    relative_object_heading_angle: float
     # road_topography: ?
     road_on_highway: bool
     road_on_junction: bool
@@ -63,6 +67,16 @@ class RoadState:
         # TODO: somehow deal with this "magic constant"
         self.road_on_highway = self.lane_type[0] == 4
         _, _, self.road_z = centerline_projection.projected_point
+        self.road_angle = angle_of_segment(
+            ego_lane_data.centerline_matrix, centerline_projection.segment_index)
+        if YAW_IS_ALREADY_RELATIVE:
+            self.relative_object_heading_angle = mos.orientation.yaw
+        else:
+            self.relative_object_heading_angle = (
+                mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
+            if mos.simulator_id == 0:
+                print("r_angle: " + str(self.road_angle) + "  yaw: " + str(mos.orientation.yaw) +
+                      " heading: " + str(self.relative_object_heading_angle))
         # TODO: initialize everything else
 
 
@@ -75,6 +89,7 @@ class MovingObjectState:
     velocity: Vector3d
     acceleration: Vector3d
     orientation: Orientation3d
+    relative_object_heading_angle: float
     heading_angle: float
     lane_ids: list[int]
     road_id: int
@@ -117,6 +132,9 @@ class MovingObjectState:
         self.road_id = None
         self.road_s = None
         self.road_state = RoadState(lane_data, self)
+        if YAW_IS_ALREADY_RELATIVE:
+            self.orientation.yaw = (
+                self.orientation.yaw + self.road_state.road_angle + 2*np.pi) % (2*np.pi)
 
 
 @dataclass
