@@ -74,9 +74,6 @@ class RoadState:
         else:
             self.relative_object_heading_angle = (
                 mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
-            if mos.simulator_id == 0:
-                print("r_angle: " + str(self.road_angle) + "  yaw: " + str(mos.orientation.yaw) +
-                      " heading: " + str(self.relative_object_heading_angle))
         # TODO: initialize everything else
 
 
