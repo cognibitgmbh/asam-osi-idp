@@ -39,7 +39,7 @@ class RoadState:
 
     def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
         ego_position = osi_vector_to_ndarray(mos.location)
-        ego_lane_data = lane_data[mos.lane_ids[0]]
+        ego_lane_data = lane_data[mos.lane_ids[0]] #TODO: What happens if we have no assigned lane
         centerline_projection = ego_lane_data.project_onto_centerline(
             ego_position,
         )
