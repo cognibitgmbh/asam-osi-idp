@@ -12,7 +12,7 @@ def get_assigned_lane_id(moving_obj: MovingObject) -> Optional[int]:
         return None
     return assigned_lane_id[0].value
 
-def get_all_assigned_lane_ids(moving_obj: MovingObject) -> Optional[int]:
+def get_all_assigned_lane_ids(moving_obj: MovingObject) -> list[int]:
     assigned_lane_id = moving_obj.moving_object_classification.assigned_lane_id
     if use_deprecated_assigned_lane:
         assigned_lane_id = moving_obj.assigned_lane_id

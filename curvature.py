@@ -25,6 +25,7 @@ class Curvature():
         return curvature_changes
 
     def _calc_curvature_for_line(self, centerline: np.ndarray) -> np.ndarray:
+        #TODO: can we reuse the centerline_distance that is passed to the constructor?
         c_0 = centerline[:-2, :]
         c_1 = centerline[1:-1, :]
         c_2 = centerline[2:, :]

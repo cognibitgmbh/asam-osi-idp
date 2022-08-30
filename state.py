@@ -20,7 +20,7 @@ class RoadState:
     curvature: float
     curvature_change: float
     lane_width: float
-    lane_position: float
+    lane_position: float #TODO: There exists already MovingObjectState.lane_position Is this the same?
     distance_to_lane_end: float
     distance_to_ramp: float
     distance_to_next_exit: float
