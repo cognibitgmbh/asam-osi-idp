@@ -11,6 +11,7 @@ from output.driver_update import DriverUpdate
 from output.esmini_output_sender import EsminiOutputSender
 from output.osi_trace_output_sender import OsiTraceOutputSender
 from output.raw_update import RawUpdate
+from road_merger import assign_roadids_to_lanes
 from state import State
 from state_builder import create_state
 
@@ -57,6 +58,8 @@ class OSI3Extractor:
                   str(len(self._current_state.moving_objects)))
             print("How many stationary objects: " +
                   str(len(self._current_state.stationary_obstacles)))
+            print(f"Lane distance: {self._current_state.moving_objects[0].road_state.distance_to_lane_end}")
+
 
     def current_state(self) -> State:
         return self._current_state
@@ -65,6 +68,15 @@ class OSI3Extractor:
         for lane in gt.lane:
             id: int = lane.id.value
             self.lane_data[id] = LaneData(gt, lane)
+            for paring in lane.classification.lane_pairing:
+                paring.antecessor_lane_id.value = 999999999999999
+                print(paring.antecessor_lane_id.value)
+                print(paring.successor_lane_id.value)
+        
+        assign_roadids_to_lanes(self.lane_data)
+
+        print("adsfasdfasdfasd")
+        exit()
 
     def send_raw_update(self, raw_update: RawUpdate):
         if self.output is None:

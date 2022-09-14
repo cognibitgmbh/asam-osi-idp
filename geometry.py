@@ -16,6 +16,13 @@ def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) ->
 def osi_vector_to_ndarray(vec: Vector3d) -> np.ndarray:
     return np.array([vec.x, vec.y, vec.z])
 
+def ndarray_to_osi_vector(array: np.ndarray):
+    vec = Vector3d()
+    vec.x = array[0]
+    vec.y = array[1]
+    vec.z = array[2]
+    return vec
+
 def angle_of_segment(line: np.ndarray, segment_id: int) -> float:
     vector = line[segment_id + 1] - line[segment_id]
     return np.arctan2(vector[0], vector[1])
