@@ -7,11 +7,16 @@ import numpy as np
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
+import osi3.osi_lane_pb2 as lane_pb2
 
 from curvature import Curvature
 from geometry import (ProjectionResult, closest_projected_point,
                       osi_vector_to_ndarray)
 
+
+OSI_LANE_TYPE_DRIVING = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_DRIVING"].number
+OSI_LANE_TYPE_INTERSECTION = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_INTERSECTION"].number
+OSI_LANE_TYPES_FOR_DRIVING = set((OSI_LANE_TYPE_DRIVING, OSI_LANE_TYPE_INTERSECTION))
 
 def get_lane_boundary_from_ground_truth(
     gt: GroundTruth,
@@ -99,3 +104,11 @@ class LaneData:
         )
         return distance
 
+    def allows_for_driving(self) -> bool:
+        return self.osi_lane.classification.type in OSI_LANE_TYPES_FOR_DRIVING
+
+    def start_point(self) -> np.array:
+        return self.centerline_matrix[0, :]
+
+    def end_point(self) -> np.array:
+        return self.centerline_matrix[-1, :]
