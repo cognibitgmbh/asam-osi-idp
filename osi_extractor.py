@@ -6,6 +6,7 @@ from os import environ
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
 from lane import LaneData
+from lanegraph import LaneGraph
 from osi_iterator import UDPGroundTruthIterator
 from output.driver_update import DriverUpdate
 from output.esmini_output_sender import EsminiOutputSender
@@ -21,6 +22,7 @@ class OSI3Extractor:
         self._stop_requested = False
         self.thread = threading.Thread(target=self._thread_target)
         self.lane_data: dict[int, LaneData] = {}
+        self.lane_graph = LaneGraph(self.lane_data)
         self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
             self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
@@ -65,6 +67,7 @@ class OSI3Extractor:
         for lane in gt.lane:
             id: int = lane.id.value
             self.lane_data[id] = LaneData(gt, lane)
+        self.lane_graph = LaneGraph(self.lane_data)
 
     def send_raw_update(self, raw_update: RawUpdate):
         if self.output is None:
