@@ -10,7 +10,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lanegraph import LaneGraph
+from lanegraph import LaneGraph, NeighboringLaneSignal
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -21,7 +21,7 @@ class RoadState:
     curvature_change: float
     lane_width: float
     lane_position: float
-    distance_to_lane_end: float
+    distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: float
     lane_markings: list[int]
@@ -55,7 +55,7 @@ class RoadState:
         )
         self.distance_to_lane_end = lane_graph.distance_to_lane_end(
             ego_lane_id,
-            centerline_projection,
+            ego_position,
         )
         ego_lane_left, ego_lane_right = (
             ego_lane_data.boundary_points_for_position(ego_position)
