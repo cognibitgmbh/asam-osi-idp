@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, Optional
+from typing import Generic, Iterable, Optional, TypeVar
 
 import numpy as np
 from geometry import ProjectionResult
@@ -36,6 +36,16 @@ class MultipleNeighborsError(Exception):
 
     def __str__(self) -> str:
         return f"OSI lane {self.lane_id} has multiple {self.side} neighbors"
+
+
+T = TypeVar("T")
+
+
+@dataclass
+class NeighboringLaneSignal(Generic[T]):
+    current_lane: T
+    left_lane: Optional[T] = None
+    right_lane: Optional[T] = None
 
 
 class LaneGraph:
@@ -105,10 +115,21 @@ class LaneGraph:
             return None
         return self._nodes[id].data
 
-    def distance_to_lane_end(self, lane_id: int, projection: ProjectionResult) -> float:
-        node = self._nodes[lane_id]
+    def _distance_to_lane_end(self, node: LaneGraphNode, position: np.ndarray) -> float:
+        projection = node.data.project_onto_centerline(position)
         distance = node.data.distance_to_end(projection)
         while node.successor is not None:
             node = node.successor
             distance += node.data.centerline_total_distance
         return distance
+
+    def distance_to_lane_end(self, lane_id: int, position: np.ndarray) -> NeighboringLaneSignal[float]:
+        node = self._nodes[lane_id]
+        result = NeighboringLaneSignal(
+            current_lane=self._distance_to_lane_end(node, position),
+        )
+        if node.left is not None:
+            result.left_lane = self._distance_to_lane_end(node.left, position)
+        if node.right is not None:
+            result.right_lane = self._distance_to_lane_end(node.right, position)
+        return result

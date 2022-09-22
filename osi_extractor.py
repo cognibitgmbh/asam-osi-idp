@@ -54,7 +54,11 @@ class OSI3Extractor:
                 self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id.value
             self._current_state = create_state(ground_truth, self.lane_graph)
-            print(f"Ego lane: {self._current_state.moving_objects[0].lane_ids}")
+            ego_lane = self._current_state.moving_objects[0].lane_ids
+            print(f"Ego lane: {ego_lane}", end=", ")
+            print(f"distance to end: {self._current_state.moving_objects[0].road_state.distance_to_lane_end}")
+
+
 
     def current_state(self) -> State:
         return self._current_state
