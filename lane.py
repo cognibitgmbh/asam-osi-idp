@@ -18,6 +18,8 @@ OSI_LANE_TYPE_DRIVING = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_
 OSI_LANE_TYPE_INTERSECTION = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_INTERSECTION"].number
 OSI_LANE_TYPES_FOR_DRIVING = set((OSI_LANE_TYPE_DRIVING, OSI_LANE_TYPE_INTERSECTION))
 
+OSI_LANE_SUBTYPE_EXIT = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name["SUBTYPE_EXIT"].number
+
 def get_lane_boundary_from_ground_truth(
     gt: GroundTruth,
     boundary_id: int
@@ -107,6 +109,9 @@ class LaneData:
 
     def allows_for_driving(self) -> bool:
         return self.osi_lane.classification.type in OSI_LANE_TYPES_FOR_DRIVING
+
+    def is_exit(self) -> bool:
+        return self.osi_lane.classification.subtype == OSI_LANE_SUBTYPE_EXIT
 
     def start_point(self) -> np.array:
         return self.centerline_matrix[0, :]

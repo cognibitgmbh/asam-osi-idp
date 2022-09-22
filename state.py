@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 from geometry import angle_of_segment, osi_vector_to_ndarray
 
 import numpy as np
@@ -23,7 +24,7 @@ class RoadState:
     lane_position: float
     distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
-    distance_to_next_exit: float
+    distance_to_next_exit: Optional[float]
     lane_markings: list[int]
     lane_type: tuple[int, int]
     speed_limit: int  # Or more info?
@@ -54,6 +55,10 @@ class RoadState:
             centerline_projection.segment_index
         )
         self.distance_to_lane_end = lane_graph.distance_to_lane_end(
+            ego_lane_id,
+            ego_position,
+        )
+        self.distance_to_next_exit = lane_graph.distance_to_next_exit(
             ego_lane_id,
             ego_position,
         )
