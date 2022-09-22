@@ -49,16 +49,12 @@ class OSI3Extractor:
         return exc_type is None
 
     def _thread_target(self):
-        arising_state: State = None
         for ground_truth in self.ground_truth_iterator:
             if len(ground_truth.lane) != 0:
                 self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id.value
-            self._current_state = create_state(ground_truth, self.lane_data)
-            print("How many moving objects: " +
-                  str(len(self._current_state.moving_objects)))
-            print("How many stationary objects: " +
-                  str(len(self._current_state.stationary_obstacles)))
+            self._current_state = create_state(ground_truth, self.lane_graph)
+            print(f"Ego lane: {self._current_state.moving_objects[0].lane_ids}")
 
     def current_state(self) -> State:
         return self._current_state

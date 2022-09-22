@@ -10,7 +10,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lane import LaneData
+from lanegraph import LaneGraph
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -37,9 +37,14 @@ class RoadState:
     road_on_junction: bool
     road_in_main_direction: bool
 
-    def __init__(self, lane_data: dict[int, LaneData], mos: MovingObjectState):
+    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState):
         ego_position = osi_vector_to_ndarray(mos.location)
-        ego_lane_data = lane_data[mos.lane_ids[0]] #TODO: What happens if we have no assigned lane
+        # TODO: What happens if we have no assigned lane
+        ego_lane_id = mos.lane_ids[0]
+        ego_lane_data = lane_graph.get_lane_data(ego_lane_id)
+        if ego_lane_data is None:
+            raise RuntimeError(f"Moving object {mos.simulator_id} is on lane"
+                               f" {ego_lane_id} which is not meant for driving")
         centerline_projection = ego_lane_data.project_onto_centerline(
             ego_position,
         )
@@ -103,7 +108,7 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject, lane_data: dict[int, LaneData]):
+    def __init__(self, mo: MovingObject, lane_graph: LaneGraph):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
@@ -128,7 +133,7 @@ class MovingObjectState:
         self.lane_position = None
         self.road_id = None
         self.road_s = None
-        self.road_state = RoadState(lane_data, self)
+        self.road_state = RoadState(lane_graph, self)
         if YAW_IS_ALREADY_RELATIVE:
             self.orientation.yaw = (
                 self.orientation.yaw + self.road_state.road_angle + 2*np.pi) % (2*np.pi)

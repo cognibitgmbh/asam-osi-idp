@@ -98,3 +98,8 @@ class LaneGraph:
             raise MultipleNeighborsError(succ.id, "predecessor")
         pre.successor = succ
         succ.predecessor = pre
+
+    def get_lane_data(self, id: int) -> Optional[LaneData]:
+        if id not in self._nodes:
+            return None
+        return self._nodes[id].data
