@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 import numpy as np
+from geometry import ProjectionResult
 
 from lane import LaneData
 
@@ -103,3 +104,11 @@ class LaneGraph:
         if id not in self._nodes:
             return None
         return self._nodes[id].data
+
+    def distance_to_lane_end(self, lane_id: int, projection: ProjectionResult) -> float:
+        node = self._nodes[lane_id]
+        distance = node.data.distance_to_end(projection)
+        while node.successor is not None:
+            node = node.successor
+            distance += node.data.centerline_total_distance
+        return distance

@@ -63,6 +63,7 @@ class LaneData:
             self.centerline_matrix[1:, :] - self.centerline_matrix[:-1, :],
             axis=1,
         )
+        self.centerline_total_distance = np.sum(self.centerline_distances)
 
     def _init_boundaries(self, gt: GroundTruth):
         left_boundaries = [
