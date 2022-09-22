@@ -53,7 +53,8 @@ class RoadState:
         self.curvature_change = ego_lane_data.curvature.get_road_curvature_change(
             centerline_projection.segment_index
         )
-        self.distance_to_lane_end = ego_lane_data.distance_to_end(
+        self.distance_to_lane_end = lane_graph.distance_to_lane_end(
+            ego_lane_id,
             centerline_projection,
         )
         ego_lane_left, ego_lane_right = (
