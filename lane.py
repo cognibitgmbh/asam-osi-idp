@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Sequence
 
 import numpy as np
 from osi3.osi_common_pb2 import Vector3d
