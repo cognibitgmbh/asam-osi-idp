@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from enum import Enum
 
 from typing import Iterable, Sequence
 
@@ -7,18 +7,40 @@ import numpy as np
 from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
-import osi3.osi_lane_pb2 as lane_pb2
 
 from curvature import Curvature
 from geometry import (ProjectionResult, closest_projected_point,
                       osi_vector_to_ndarray)
 
 
-OSI_LANE_TYPE_DRIVING = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_DRIVING"].number
-OSI_LANE_TYPE_INTERSECTION = lane_pb2._LANE_CLASSIFICATION_TYPE.values_by_name["TYPE_INTERSECTION"].number
-OSI_LANE_TYPES_FOR_DRIVING = set((OSI_LANE_TYPE_DRIVING, OSI_LANE_TYPE_INTERSECTION))
+class LaneType(Enum):
+    UNKNOWN = 0
+    OTHER = 1
+    DRIVING = 2
+    NONDRIVING = 3
+    INTERSECTION = 4
 
-OSI_LANE_SUBTYPE_EXIT = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name["SUBTYPE_EXIT"].number
+    def allows_for_driving(self) -> bool:
+        return self in (LaneType.DRIVING, LaneType.INTERSECTION)
+
+
+class LaneSubtype(Enum):
+    UNKNOWN = 0
+    OTHER = 1
+    NORMAL = 2
+    BIKING = 3
+    SIDEWALK = 4
+    PARKING = 5
+    STOP = 6
+    RESTRICTED = 7
+    BORDER = 8
+    SHOULDER = 9
+    EXIT = 10
+    ENTRY = 11
+    ONRAMP = 12
+    OFFRAMP = 13
+    CONNECTINGAMP = 14
+
 
 def get_lane_boundary_from_ground_truth(
     gt: GroundTruth,
@@ -52,6 +74,8 @@ class LaneData:
         self._init_boundaries(gt)
         self._init_centerline()
         self.curvature = Curvature(self.centerline_matrix, self.centerline_distances)
+        self.lane_type = LaneType(self.osi_lane.classification.type)
+        self.lane_subtype = LaneSubtype(self.osi_lane.classification.subtype)
 
     def _init_centerline(self):
         centerline: Sequence[Vector3d] = self.osi_lane.classification.centerline
@@ -106,12 +130,6 @@ class LaneData:
             self.centerline_distances[proj_res.segment_index+1:],
         )
         return distance
-
-    def allows_for_driving(self) -> bool:
-        return self.osi_lane.classification.type in OSI_LANE_TYPES_FOR_DRIVING
-
-    def is_exit(self) -> bool:
-        return self.osi_lane.classification.subtype == OSI_LANE_SUBTYPE_EXIT
 
     def start_point(self) -> np.array:
         return self.centerline_matrix[0, :]

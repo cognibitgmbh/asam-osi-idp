@@ -11,7 +11,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lane import OSI_LANE_TYPE_INTERSECTION
+from lane import LaneSubtype, LaneType
 from lanegraph import LaneGraph, NeighboringLaneSignal
 from road import RoadManager
 
@@ -28,7 +28,7 @@ class RoadState:
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
     lane_markings: list[int]
-    lane_type: tuple[int, int]
+    lane_type: tuple[LaneType, LaneSubtype]
     speed_limit: int  # Or more info?
     traffic_signs: list[TrafficSign]  # Based on sensor?
     traffic_lights: list[TrafficLight]  # Based on sensor?
@@ -71,14 +71,10 @@ class RoadState:
         self.lane_position = (
             np.linalg.norm(ego_position - ego_lane_left) / self.lane_width
         )
-        osi_lane_classification = (
-            ego_lane_data.osi_lane.classification
-        )
         self.lane_type = (
-            osi_lane_classification.type, osi_lane_classification.subtype
+            ego_lane_data.lane_type, ego_lane_data.lane_subtype
         )
-        # TODO: somehow deal with this "magic constant"
-        self.road_on_junction = self.lane_type[0] == OSI_LANE_TYPE_INTERSECTION
+        self.road_on_junction = ego_lane_data.lane_type == LaneType.INTERSECTION
         _, _, self.road_z = centerline_projection.projected_point
         self.road_angle = angle_of_segment(
             ego_lane_data.centerline_matrix, centerline_projection.segment_index)
