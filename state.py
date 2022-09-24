@@ -12,6 +12,7 @@ from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
 from lanegraph import LaneGraph, NeighboringLaneSignal
+from road import RoadManager
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -114,7 +115,7 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject, lane_graph: LaneGraph):
+    def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
@@ -137,8 +138,10 @@ class MovingObjectState:
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
         self.lane_position = None
-        self.road_id = None
-        self.road_s = None
+        self.road_id = road_manager.get_road_id(
+            lane_graph._nodes[self.lane_ids[0]])
+        self.road_s = road_manager.object_road_s(
+            lane_graph._nodes[self.lane_ids[0]], osi_vector_to_ndarray(self.location))
         self.road_state = RoadState(lane_graph, self)
         if YAW_IS_ALREADY_RELATIVE:
             self.orientation.yaw = (
