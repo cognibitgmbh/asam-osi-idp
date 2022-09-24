@@ -12,6 +12,7 @@ from output.driver_update import DriverUpdate
 from output.esmini_output_sender import EsminiOutputSender
 from output.osi_trace_output_sender import OsiTraceOutputSender
 from output.raw_update import RawUpdate
+from road import RoadManager
 from state import State
 from state_builder import create_state
 
@@ -23,6 +24,7 @@ class OSI3Extractor:
         self.thread = threading.Thread(target=self._thread_target)
         self.lane_data: dict[int, LaneData] = {}
         self.lane_graph = LaneGraph(self.lane_data)
+        self.road_manager = RoadManager(self.lane_graph)
         self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
             self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
@@ -53,7 +55,7 @@ class OSI3Extractor:
             if len(ground_truth.lane) != 0:
                 self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id.value
-            self._current_state = create_state(ground_truth, self.lane_graph)
+            self._current_state = create_state(ground_truth, self.lane_graph, self.road_manager)
             ego_lane = self._current_state.moving_objects[0].lane_ids
             print(f"Ego lane: {ego_lane}", end=", ")
             print(f"distance to end: {self._current_state.moving_objects[0].road_state.distance_to_lane_end}")
@@ -68,6 +70,7 @@ class OSI3Extractor:
             id: int = lane.id.value
             self.lane_data[id] = LaneData(gt, lane)
         self.lane_graph = LaneGraph(self.lane_data)
+        self.road_manager = RoadManager(self.lane_graph)
 
     def send_raw_update(self, raw_update: RawUpdate):
         if self.output is None:
