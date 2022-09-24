@@ -1,5 +1,3 @@
-from hashlib import new
-from locale import currency
 from typing import Optional
 
 import numpy as np
@@ -111,7 +109,7 @@ class RoadManager:
         else:
             successor_subtype = road_independent_successor.data.osi_lane.classification.subtype
             lane_subtype = lane.data.osi_lane.classification.subtype
-            #TODO is this right?
+            # TODO is this right?
             if road_independent_successor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
                 return None
             if successor_subtype == lane_subtype:
