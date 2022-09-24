@@ -32,13 +32,13 @@ class Road:
                     f"Lane with id:{lane.id} seems to be not part of road with id: {self.road_id}")
         return current_lane
 
-    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> float:
+    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> tuple[float, float]:
         rightmost_lane: LaneGraphNode = self._get_rightmost_roadlane(lane)
         index = self._rightmost_lanes.index(rightmost_lane)
         projection = rightmost_lane.data.project_onto_centerline(position)
-        distance = rightmost_lane.data.distance_to_end(projection)
-        distance += np.sum(self._rightmost_lanes_lengths[index + 1:]).item()
-        return distance / self._total_distance
+        distance = np.sum(self._rightmost_lanes_lengths[:index + 1]).item()
+        distance -= rightmost_lane.data.distance_to_end(projection)
+        return distance, self._total_distance
 
 
 class RoadManager:
@@ -90,24 +90,18 @@ class RoadManager:
         road_independent_neighbor = lane.right
         if road_independent_neighbor is None:
             return None
-        else:
-            neighbor_subtype = road_independent_neighbor.data.osi_lane.classification.subtype
-            lane_subtype = lane.data.osi_lane.classification.subtype
-            if road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
-                return None
-            return road_independent_neighbor
+        elif road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
+            return None
+        return road_independent_neighbor
 
     # TODO: Don't know if this is good
     def _same_road_left_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.left
         if road_independent_neighbor is None:
             return None
-        else:
-            neighbor_subtype = road_independent_neighbor.data.osi_lane.classification.subtype
-            lane_subtype = lane.data.osi_lane.classification.subtype
-            if road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
-                return None
-            return road_independent_neighbor
+        elif road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
+            return None
+        return road_independent_neighbor
 
     # TODO: Don't know if this is good
     def _same_road_successor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
@@ -117,6 +111,7 @@ class RoadManager:
         else:
             successor_subtype = road_independent_successor.data.osi_lane.classification.subtype
             lane_subtype = lane.data.osi_lane.classification.subtype
+            #TODO is this right?
             if road_independent_successor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
                 return None
             if successor_subtype == lane_subtype:
@@ -169,5 +164,5 @@ class RoadManager:
     def get_road_id(self, lane: LaneGraphNode) -> Optional[int]:
         return self.lane_id_to_road_map[lane.id].road_id
 
-    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> float:
+    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> tuple[float, float]:
         return self.lane_id_to_road_map[lane.id].object_road_s(lane, position)

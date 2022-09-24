@@ -102,7 +102,7 @@ class MovingObjectState:
     heading_angle: float
     lane_ids: list[int]
     road_id: int
-    road_s: float
+    road_s: tuple[float, float]
     indicator_signal: int
     brake_light: int
     front_fog_light: int
@@ -138,10 +138,10 @@ class MovingObjectState:
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
         self.lane_position = None
-        self.road_id = road_manager.get_road_id(
-            lane_graph._nodes[self.lane_ids[0]])
+        lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
+        self.road_id = road_manager.get_road_id(lane_graph_node)
         self.road_s = road_manager.object_road_s(
-            lane_graph._nodes[self.lane_ids[0]], osi_vector_to_ndarray(self.location))
+            lane_graph_node, osi_vector_to_ndarray(self.location))
         self.road_state = RoadState(lane_graph, self)
         if YAW_IS_ALREADY_RELATIVE:
             self.orientation.yaw = (
