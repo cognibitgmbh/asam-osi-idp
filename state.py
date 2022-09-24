@@ -11,6 +11,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
+from lane import OSI_LANE_TYPE_INTERSECTION
 from lanegraph import LaneGraph, NeighboringLaneSignal
 from road import RoadManager
 
@@ -77,7 +78,7 @@ class RoadState:
             osi_lane_classification.type, osi_lane_classification.subtype
         )
         # TODO: somehow deal with this "magic constant"
-        self.road_on_highway = self.lane_type[0] == 4
+        self.road_on_junction = self.lane_type[0] == OSI_LANE_TYPE_INTERSECTION
         _, _, self.road_z = centerline_projection.projected_point
         self.road_angle = angle_of_segment(
             ego_lane_data.centerline_matrix, centerline_projection.segment_index)
