@@ -51,7 +51,8 @@ def boundaries_to_ndarray(
 
 
 class LaneData:
-    _last_position_for_boundaries_projection: Optional[np.ndarray] = None
+    _last_position_for_boundaries_projection: Optional[np.ndarray] = np.array(
+        [float("nan"), float("nan"), float("nan")])
     _cached_boundaries_projections: tuple[Optional[ProjectionResult],
                                           Optional[ProjectionResult]] = (None, None)
 
@@ -112,8 +113,11 @@ class LaneData:
         self,
         position: np.ndarray
     ) -> tuple[Optional[ProjectionResult], Optional[ProjectionResult]]:
-        if self._last_position_for_boundaries_projection == position:
+        if np.array_equal(self._last_position_for_boundaries_projection, position):
             return self._cached_boundaries_projections
+        elif np.allclose(self._last_position_for_boundaries_projection, position):
+            raise Exception(
+                "I would assume that the two positions are either equal or very different, but not close")
         self._last_position_for_boundaries_projection = position
         self._cached_boundaries_projections = (
             closest_projected_point(position, self.left_boundary_matrix),
@@ -125,7 +129,7 @@ class LaneData:
         self,
         position: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
-        left_projection, right_projection = self._cached_boundaries_projections(
+        left_projection, right_projection = self._cached_boundary_points_for_position(
             position)
         left = left_projection.projected_point
         right = right_projection.projected_point
