@@ -27,7 +27,8 @@ class RoadState:
     distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
-    lane_markings: list[int]
+    left_lane_marking: int
+    right_lane_marking: int
     lane_type: tuple[int, int]
     speed_limit: int  # Or more info?
     traffic_signs: list[TrafficSign]  # Based on sensor?
