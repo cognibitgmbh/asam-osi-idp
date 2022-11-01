@@ -2,9 +2,8 @@ from dataclasses import dataclass
 from typing import Generic, Iterable, Optional, TypeVar
 
 import numpy as np
-from geometry import ProjectionResult
 
-from lane import LaneData
+from lane import LaneData, LaneSubtype
 
 
 SUCCESSOR_MAX_DISTANCE = 0.1
@@ -51,9 +50,9 @@ class NeighboringLaneSignal(Generic[T]):
 class LaneGraph:
     def __init__(self, lane_dict: dict[int, LaneData]):
         self._nodes = {id: LaneGraphNode(id=id, data=data) for id, data
-                       in lane_dict.items() if data.allows_for_driving()}
+                       in lane_dict.items() if data.lane_type.allows_for_driving()}
         for id, lane in lane_dict.items():
-            if lane.allows_for_driving():
+            if lane.lane_type.allows_for_driving():
                 self._add_lane_neighbours(id)
         self._compute_successors()
 
@@ -151,7 +150,7 @@ class LaneGraph:
         projection = node.data.project_onto_centerline(position)
         distance = node.data.distance_to_end(projection)
         node = self._get_rightmost_lane(node)
-        while not node.data.is_exit():
+        while not node.data.lane_subtype == LaneSubtype.EXIT:
             node = self._next_lane_node(node)
             if node is None:
                 return None
