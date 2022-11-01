@@ -136,3 +136,6 @@ class LaneData:
 
     def end_point(self) -> np.array:
         return self.centerline_matrix[-1, :]
+
+    def type_info(self) -> tuple[LaneType, LaneSubtype]:
+        return (self.lane_type, self.lane_subtype)

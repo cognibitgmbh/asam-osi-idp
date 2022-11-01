@@ -28,7 +28,7 @@ class RoadState:
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
     lane_markings: list[int]
-    lane_type: tuple[LaneType, LaneSubtype]
+    lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
     speed_limit: int  # Or more info?
     traffic_signs: list[TrafficSign]  # Based on sensor?
     traffic_lights: list[TrafficLight]  # Based on sensor?
@@ -71,9 +71,7 @@ class RoadState:
         self.lane_position = (
             np.linalg.norm(ego_position - ego_lane_left) / self.lane_width
         )
-        self.lane_type = (
-            ego_lane_data.lane_type, ego_lane_data.lane_subtype
-        )
+        self.lane_type = lane_graph.neighbor_lane_types(ego_lane_id)
         self.road_on_junction = ego_lane_data.lane_type == LaneType.INTERSECTION
         _, _, self.road_z = centerline_projection.projected_point
         self.road_angle = angle_of_segment(

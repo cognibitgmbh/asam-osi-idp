@@ -3,7 +3,7 @@ from typing import Generic, Iterable, Optional, TypeVar
 
 import numpy as np
 
-from lane import LaneData, LaneSubtype
+from lane import LaneData, LaneSubtype, LaneType
 
 
 SUCCESSOR_MAX_DISTANCE = 0.1
@@ -24,7 +24,7 @@ class LaneGraphNode:
         pre = self.predecessor.id if self.predecessor is not None else None
         succ = self.successor.id if self.successor is not None else None
         return (f"LaneGraphNode(id={self.id}, right={right}, left={left}"
-                              f", predecessor={pre}, successor={succ})")
+                f", predecessor={pre}, successor={succ})")
 
 
 class MultipleNeighborsError(Exception):
@@ -133,18 +133,18 @@ class LaneGraph:
             result.right_lane = self._distance_to_lane_end(node.right, position)
         return result
 
-    def _get_rightmost_lane(self, node: LaneGraphNode) -> LaneGraphNode: 
+    def _get_rightmost_lane(self, node: LaneGraphNode) -> LaneGraphNode:
         while node.right is not None:
             node = node.right
         return node
-    
+
     def _next_lane_node(self, current_node: LaneGraphNode) -> Optional[LaneGraphNode]:
         while current_node is not None:
             if current_node.successor is not None:
                 return self._get_rightmost_lane(current_node.successor)
             current_node = current_node.left
         return None
-    
+
     def distance_to_next_exit(self, lane_id: int, position: np.ndarray) -> Optional[float]:
         node = self._nodes[lane_id]
         projection = node.data.project_onto_centerline(position)
@@ -156,5 +156,11 @@ class LaneGraph:
                 return None
             distance += node.data.centerline_total_distance
         return distance
-        
 
+    def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]:
+        node = self._nodes[lane_id]
+        return NeighboringLaneSignal(
+            current_lane=node.data.type_info(),
+            left_lane=node.left.data.type_info() if node.left is not None else None,
+            right_lane=node.right.data.type_info() if node.right is not None else None,
+        )
