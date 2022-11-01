@@ -138,7 +138,6 @@ class MovingObjectState:
         self.service_vehicle_illumination = light_state.service_vehicle_illumination
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
-        self.lane_position = None
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
         self.road_id = road_manager.get_road_id(lane_graph_node)
         self.road_s = road_manager.object_road_s(
