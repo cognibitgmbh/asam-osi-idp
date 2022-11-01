@@ -187,6 +187,9 @@ class LaneData:
     def end_point(self) -> np.array:
         return self.centerline_matrix[-1, :]
 
+    def type_info(self) -> tuple[LaneType, LaneSubtype]:
+        return (self.lane_type, self.lane_subtype)
+
     def get_lane_boundary_marking_for_position(self, position: np.ndarray, left: bool) -> LaneBoundaryMarkingType:
         lane_boundaries = self._left_boundaries if left else self._right_boundaries
         if len(lane_boundaries) == 1:
@@ -200,4 +203,3 @@ class LaneData:
             else:
                 boundary_id = self._point_id_to_right_boundary_id[projection_res.segment_index]
             return LaneBoundaryMarkingType(lane_boundaries[boundary_id]) 
-
