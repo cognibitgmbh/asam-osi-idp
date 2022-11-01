@@ -11,7 +11,7 @@ from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from deprecated_handler import get_all_assigned_lane_ids
-from lane import LaneSubtype, LaneType
+from lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from lanegraph import LaneGraph, NeighboringLaneSignal
 from road import RoadManager
 
@@ -27,8 +27,9 @@ class RoadState:
     distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
-    lane_markings: list[int]
     lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
+    left_lane_marking: LaneBoundaryMarkingType
+    right_lane_marking: LaneBoundaryMarkingType
     speed_limit: int  # Or more info?
     traffic_signs: list[TrafficSign]  # Based on sensor?
     traffic_lights: list[TrafficLight]  # Based on sensor?
@@ -72,6 +73,8 @@ class RoadState:
             np.linalg.norm(ego_position - ego_lane_left) / self.lane_width
         )
         self.lane_type = lane_graph.neighbor_lane_types(ego_lane_id)
+        self.left_lane_marking = ego_lane_data.get_lane_boundary_marking_for_position(ego_position, left=True)
+        self.right_lane_marking = ego_lane_data.get_lane_boundary_marking_for_position(ego_position, left=False)
         self.road_on_junction = ego_lane_data.lane_type == LaneType.INTERSECTION
         _, _, self.road_z = centerline_projection.projected_point
         self.road_angle = angle_of_segment(
@@ -132,7 +135,6 @@ class MovingObjectState:
         self.service_vehicle_illumination = light_state.service_vehicle_illumination
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
-        self.lane_position = None
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
         self.road_id = road_manager.get_road_id(lane_graph_node)
         self.road_s = road_manager.object_road_s(
