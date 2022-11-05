@@ -21,6 +21,7 @@ class Road:
     _rightmost_lanes: list[LaneGraphNode]
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
+    on_highway: bool
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -70,11 +71,14 @@ class RoadManager:
 
     def _create_new_road_starting_with(self, lane: LaneGraphNode, road_id: int):
         new_road = Road()
+        new_road.on_highway = False
         new_road.road_id = road_id
         new_road._rightmost_lanes = []
         new_road._total_distance = 0.0
         current_lane = lane
         while current_lane is not None:
+            if current_lane.data.lane_subtype in (LaneSubtype.ENTRY, LaneSubtype.EXIT):
+                new_road.on_highway = True
             self._add_all_parallel_lanes_to_road(current_lane, new_road)
             new_road._rightmost_lanes.append(current_lane)
             current_lane = self._get_next_mostright_lane(current_lane)
@@ -162,8 +166,5 @@ class RoadManager:
                 next_road_id += 1
         print(f"Number of Roads: {next_road_id}")
 
-    def get_road_id(self, lane: LaneGraphNode) -> Optional[int]:
-        return self.lane_id_to_road_map[lane.id].road_id
-
-    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> tuple[float, float]:
-        return self.lane_id_to_road_map[lane.id].object_road_s(lane, position)
+    def get_road(self, lane: LaneGraphNode) -> Road:
+        return self.lane_id_to_road_map[lane.id]
