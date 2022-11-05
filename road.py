@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 import osi3.osi_lane_pb2 as lane_pb2
+from lane import LaneSubtype
 
 from lanegraph import LaneGraph, LaneGraphNode
 
@@ -20,6 +21,7 @@ class Road:
     _rightmost_lanes: list[LaneGraphNode]
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
+    on_highway: bool
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -69,11 +71,14 @@ class RoadManager:
 
     def _create_new_road_starting_with(self, lane: LaneGraphNode, road_id: int):
         new_road = Road()
+        new_road.on_highway = False
         new_road.road_id = road_id
         new_road._rightmost_lanes = []
         new_road._total_distance = 0.0
         current_lane = lane
         while current_lane is not None:
+            if current_lane.data.lane_subtype in (LaneSubtype.ENTRY, LaneSubtype.EXIT):
+                new_road.on_highway = True
             self._add_all_parallel_lanes_to_road(current_lane, new_road)
             new_road._rightmost_lanes.append(current_lane)
             current_lane = self._get_next_mostright_lane(current_lane)
@@ -101,51 +106,52 @@ class RoadManager:
             return None
         return road_independent_neighbor
 
-    # TODO: Don't know if this is good
+    def _are_successing_lanes_same_road(self, predecessor, successor) -> bool:
+        successor_subtype = successor.subtype
+        predecessor_subtype = predecessor.subtype
+        if predecessor.type != successor.type:
+            return False
+        if successor_subtype == predecessor_subtype:
+            return True
+        # TODO: maybe also allow NORMAL -> ONRAMP?
+        if predecessor_subtype == LaneSubtype.NORMAL.value and successor_subtype in (LaneSubtype.NORMAL.value, LaneSubtype.EXIT.value):
+            return True
+        if predecessor_subtype == LaneSubtype.EXIT.value and successor_subtype == LaneSubtype.EXIT.value:
+            return True
+        if predecessor_subtype == LaneSubtype.ENTRY.value and successor_subtype in (LaneSubtype.NORMAL.value, LaneSubtype.ENTRY.value, LaneSubtype.EXIT.value):
+            return True
+        if predecessor_subtype == LaneSubtype.ONRAMP.value and successor_subtype == LaneSubtype.ONRAMP.value:
+            return True
+        if predecessor_subtype == LaneSubtype.OFFRAMP.value and successor_subtype in (LaneSubtype.ONRAMP.value, LaneSubtype.ONRAMP.value):
+            return True
+        if predecessor_subtype == LaneSubtype.CONNECTINGRAMP.value and successor_subtype == LaneSubtype.CONNECTINGRAMP.value:
+            return True
+        return False
+
     def _same_road_successor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_successor = lane.successor
         if road_independent_successor is None:
             return None
-        else:
-            successor_subtype = road_independent_successor.data.osi_lane.classification.subtype
-            lane_subtype = lane.data.osi_lane.classification.subtype
-            # TODO is this right?
-            if road_independent_successor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
-                return None
-            if successor_subtype == lane_subtype:
-                return road_independent_successor
-
-            if lane_subtype == SUBTYPE_EXIT and successor_subtype != SUBTYPE_EXIT:
-                return None
-            if lane_subtype != SUBTYPE_ENTRY and successor_subtype == SUBTYPE_ENTRY:
-                return None
+        if self._are_successing_lanes_same_road(lane.data.osi_lane.classification, road_independent_successor.data.osi_lane.classification):
             return road_independent_successor
-
-    # TODO: Don't know if this is good
-    def _same_road_precessor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
-        road_independent_precessor = lane.predecessor
-        if road_independent_precessor is None:
-            return None
         else:
-            precessor_subtype = road_independent_precessor.data.osi_lane.classification.subtype
-            lane_subtype = lane.data.osi_lane.classification.subtype
-            if road_independent_precessor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
-                return None
-            if precessor_subtype == lane_subtype:
-                return road_independent_precessor
+            return None
 
-            if precessor_subtype == SUBTYPE_EXIT and lane_subtype != SUBTYPE_EXIT:
-                return None
-            if precessor_subtype != SUBTYPE_ENTRY and lane_subtype == SUBTYPE_ENTRY:
-                return None
-            return road_independent_precessor
+    def _same_road_predecessor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
+        road_independent_predecessor = lane.predecessor
+        if road_independent_predecessor is None:
+            return None
+        if self._are_successing_lanes_same_road(road_independent_predecessor.data.osi_lane.classification, lane.data.osi_lane.classification):
+            return road_independent_predecessor
+        else:
+            return None
 
     def _is_rightmost_beginning_lane(self, lane: LaneGraphNode) -> bool:
         if self._same_road_right_neighbor(lane) is not None:
             return False
         current_lane = lane
         while current_lane is not None:
-            if self._same_road_precessor(current_lane) is not None:
+            if self._same_road_predecessor(current_lane) is not None:
                 return False
             current_lane = self._same_road_left_neighbor(current_lane)
         return True
@@ -159,8 +165,5 @@ class RoadManager:
                 self._create_new_road_starting_with(lane, next_road_id)
                 next_road_id += 1
 
-    def get_road_id(self, lane: LaneGraphNode) -> Optional[int]:
-        return self.lane_id_to_road_map[lane.id].road_id
-
-    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> tuple[float, float]:
-        return self.lane_id_to_road_map[lane.id].object_road_s(lane, position)
+    def get_road(self, lane: LaneGraphNode) -> Road:
+        return self.lane_id_to_road_map[lane.id]

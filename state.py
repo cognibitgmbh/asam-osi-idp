@@ -13,7 +13,7 @@ from osi3.osi_trafficsign_pb2 import TrafficSign
 from deprecated_handler import get_all_assigned_lane_ids
 from lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from lanegraph import LaneGraph, NeighboringLaneSignal
-from road import RoadManager
+from road import Road, RoadManager
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -41,7 +41,7 @@ class RoadState:
     road_on_junction: bool
     road_in_main_direction: bool
 
-    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState):
+    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road):
         ego_position = osi_vector_to_ndarray(mos.location)
         # TODO: What happens if we have no assigned lane
         ego_lane_id = mos.lane_ids[0]
@@ -84,6 +84,7 @@ class RoadState:
         else:
             self.relative_object_heading_angle = (
                 mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
+        self.road_on_highway = road.on_highway
         # TODO: initialize everything else
 
 
@@ -136,10 +137,11 @@ class MovingObjectState:
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
-        self.road_id = road_manager.get_road_id(lane_graph_node)
-        self.road_s = road_manager.object_road_s(
+        road_of_lane = road_manager.get_road(lane_graph_node)
+        self.road_id = road_of_lane.road_id
+        self.road_s = road_of_lane.object_road_s(
             lane_graph_node, osi_vector_to_ndarray(self.location))
-        self.road_state = RoadState(lane_graph, self)
+        self.road_state = RoadState(lane_graph, self, road_of_lane)
         if YAW_IS_ALREADY_RELATIVE:
             self.orientation.yaw = (
                 self.orientation.yaw + self.road_state.road_angle + 2*np.pi) % (2*np.pi)
