@@ -158,13 +158,17 @@ class LaneGraph:
 
     def distance_to_ramp(self, lane_id: int, position: np.ndarray) -> NeighboringLaneSignal[Optional[float]]:
         node_center = self._nodes[lane_id]
+        if node_center.data.lane_subtype in (LaneSubtype.OFFRAMP, LaneSubtype.CONNECTINGRAMP):
+            return NeighboringLaneSignal(current_lane=None)
         projection = node_center.data.project_onto_centerline(position)
-        distance_left = distance_center = distance_right = node_center.data.distance_to_end(projection)
+        initial_distance = node_center.data.distance_to_end(projection)
+        distances = NeighboringLaneSignal(initial_distance, initial_distance, initial_distance)
         if node_center.left != None:
             if self.are_parallel_lenes_in_same_direction(node_center.left, node_center):
                 node_left = node_center.left
             else:
                 node_left = None
+                distances.left_lane = None
         else:
             node_left = node_center
 
@@ -174,11 +178,20 @@ class LaneGraph:
             node_right = node_center
 
         if node_left != None:
-            node_left =   node_left.successor
+            node_left = node_left.successor
         node_right = node_right.sccessor
         node_center = node_center.successor
         while node_left != None or node_right != None or node_center != None:
-            
+            if node_left != None:
+                if node_center.left != None:
+                    if self.are_parallel_lenes_in_same_direction(node_center.left, node_center):
+                        node_left = node_center.left
+                    else:
+                        node_left = None
+                        distances.left_lane = None
+                else:
+                    node_left = node_center
+
             distance += node.data.centerline_total_distance
             node = self._next_lane_node(node)
         return None if node is None else distance
