@@ -150,12 +150,12 @@ class LaneGraph:
         projection = node.data.project_onto_centerline(position)
         distance = node.data.distance_to_end(projection)
         node = self._get_rightmost_lane(node)
-        while not node.data.lane_subtype == LaneSubtype.EXIT:
-            node = self._next_lane_node(node)
-            if node is None:
-                return None
+        node = self._next_lane_node(node)
+        while node != None and node.data.lane_subtype != LaneSubtype.EXIT:
             distance += node.data.centerline_total_distance
-        return distance
+            node = self._next_lane_node(node)
+        return None if node is None else distance
+
 
     def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]:
         node = self._nodes[lane_id]
