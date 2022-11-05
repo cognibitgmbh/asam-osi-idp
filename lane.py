@@ -39,7 +39,7 @@ class LaneSubtype(Enum):
     ENTRY = 11
     ONRAMP = 12
     OFFRAMP = 13
-    CONNECTINGAMP = 14
+    CONNECTINGRAMP = 14
 
 
 class LaneBoundaryMarkingType(Enum):
