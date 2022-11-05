@@ -164,7 +164,6 @@ class RoadManager:
             if self._is_rightmost_beginning_lane(lane):
                 self._create_new_road_starting_with(lane, next_road_id)
                 next_road_id += 1
-        print(f"Number of Roads: {next_road_id}")
 
     def get_road(self, lane: LaneGraphNode) -> Road:
         return self.lane_id_to_road_map[lane.id]
