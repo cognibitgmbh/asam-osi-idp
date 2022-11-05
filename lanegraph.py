@@ -156,6 +156,32 @@ class LaneGraph:
             node = self._next_lane_node(node)
         return None if node is None else distance
 
+    def distance_to_ramp(self, lane_id: int, position: np.ndarray) -> NeighboringLaneSignal[Optional[float]]:
+        node_center = self._nodes[lane_id]
+        projection = node_center.data.project_onto_centerline(position)
+        distance_left = distance_center = distance_right = node_center.data.distance_to_end(projection)
+        if node_center.left != None:
+            if self.are_parallel_lenes_in_same_direction(node_center.left, node_center):
+                node_left = node_center.left
+            else:
+                node_left = None
+        else:
+            node_left = node_center
+
+        if node_center.right != None:
+            node_right = node_center.right
+        else:
+            node_right = node_center
+
+        if node_left != None:
+            node_left =   node_left.successor
+        node_right = node_right.sccessor
+        node_center = node_center.successor
+        while node_left != None or node_right != None or node_center != None:
+            
+            distance += node.data.centerline_total_distance
+            node = self._next_lane_node(node)
+        return None if node is None else distance
 
     def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]:
         node = self._nodes[lane_id]
@@ -164,3 +190,11 @@ class LaneGraph:
             left_lane=node.left.data.type_info() if node.left is not None else None,
             right_lane=node.right.data.type_info() if node.right is not None else None,
         )
+    
+    def are_parallel_lanes_in_same_direction(self, node1: LaneGraphNode, node2: LaneGraphNode) -> bool:
+        same_direction_distance = np.linalg.norm(node1.data._centerline_matrix[0], node2.data._centerline_matrix[0])
+        same_direction_distance += np.linalg.norm(node1.data._centerline_matrix[-1], node2.data._centerline_matrix[-1]) 
+        opposite_direction_distance = np.linalg.norm(node1.data._centerline_matrix[0], node2.data._centerline_matrix[-1])
+        opposite_direction_distance += np.linalg.norm(node1.data._centerline_matrix[-1], node2.data._centerline_matrix[0]) 
+        return same_direction_distance < opposite_direction_distance
+
