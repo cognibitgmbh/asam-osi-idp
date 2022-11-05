@@ -151,7 +151,7 @@ class LaneGraph:
         distance = node.data.distance_to_end(projection)
         node = self._get_rightmost_lane(node)
         node = self._next_lane_node(node)
-        while node != None and node.data.lane_subtype != LaneSubtype.EXIT:
+        while node is not None and node.data.lane_subtype != LaneSubtype.EXIT:
             distance += node.data.centerline_total_distance
             node = self._next_lane_node(node)
         return None if node is None else distance
