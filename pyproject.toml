@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "curvature.py",
+  "deprecated_handler.py",
+  "geometry.py",
+  "lane.py",
+  "lanegraph.py",
+  "osi_iterator.py",
+  "osi_extractor.py",
+  "osi_trace.py",
+  "road.py",
+  "state.py",
+  "state_builder.py",
+  "udp_osi_common.py",
+  "vehicle_update.py",
+  "vehicle_update_sender.py",
+  "upd_osi_common.py",
+  "output/driver_update.py",
+  "output/esmini_output_sender.py",
+  "output/osi_trace_output_sender.py",
+  "output/output_sender.py",
+  "output/raw_update.py"
+]
+
+[project]
+name = "osi_extractor"
+version = "0.0.1"
+description = "Extract OSI signals from esmini"
