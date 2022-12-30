@@ -39,9 +39,10 @@ class RoadState:
     # road_topography: ?
     road_on_highway: bool
     road_on_junction: bool
-    road_in_main_direction: bool
+    same_road_as_ego: bool
 
-    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road):
+    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: int):
+        # TODO: this variable naming is confusing when considering same_road_as_ego
         ego_position = osi_vector_to_ndarray(mos.location)
         # TODO: What happens if we have no assigned lane
         ego_lane_id = mos.lane_ids[0]
@@ -89,6 +90,7 @@ class RoadState:
             self.relative_object_heading_angle = (
                 mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
         self.road_on_highway = road.on_highway
+        self.same_road_as_ego = road.road_id == ego_road_id
         # TODO: initialize everything else
 
 
@@ -118,7 +120,7 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager):
+    def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager, ego_road_id: int):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
@@ -145,7 +147,7 @@ class MovingObjectState:
         self.road_id = road_of_lane.road_id
         self.road_s = road_of_lane.object_road_s(
             lane_graph_node, osi_vector_to_ndarray(self.location))
-        self.road_state = RoadState(lane_graph, self, road_of_lane)
+        self.road_state = RoadState(lane_graph, self, road_of_lane, ego_road_id)
         if YAW_IS_ALREADY_RELATIVE:
             self.orientation.yaw = (
                 self.orientation.yaw + self.road_state.road_angle + 2*np.pi) % (2*np.pi)
