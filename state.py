@@ -65,6 +65,10 @@ class RoadState:
             ego_lane_id,
             ego_position,
         )
+        self.distance_to_ramp = lane_graph.distance_to_ramp(
+            ego_lane_id,
+            ego_position,
+        )
         ego_lane_left, ego_lane_right = (
             ego_lane_data.boundary_points_for_position(ego_position)
         )
