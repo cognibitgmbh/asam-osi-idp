@@ -162,39 +162,90 @@ class LaneGraph:
             return NeighboringLaneSignal(current_lane=None)
         projection = node_center.data.project_onto_centerline(position)
         initial_distance = node_center.data.distance_to_end(projection)
-        distances = NeighboringLaneSignal(initial_distance, initial_distance, initial_distance)
+        distances = NeighboringLaneSignal(initial_distance, None, None)
+        moved_left = False
+        moved_right = False
         if node_center.left != None:
-            if self.are_parallel_lenes_in_same_direction(node_center.left, node_center):
+            moved_left = True
+            if self.are_parallel_lanes_in_same_direction(node_center.left, node_center):
                 node_left = node_center.left
+                distances.left_lane = initial_distance
             else:
                 node_left = None
                 distances.left_lane = None
         else:
-            node_left = node_center
+            node_left = None
+            distances.left_lane = None
 
         if node_center.right != None:
+            moved_right = True
             node_right = node_center.right
+            distances.right_lane = initial_distance
         else:
-            node_right = node_center
-
-        if node_left != None:
-            node_left = node_left.successor
-        node_right = node_right.sccessor
-        node_center = node_center.successor
+            node_right = None
+            distances.right_lane = None
+        node_left = self.get_sucessor_if_not_beginn_of_entry(node_left)
+        if node_left == None:
+            distances.left_lane = None
+        node_right = self.get_sucessor_if_not_beginn_of_entry(node_right)
+        if node_right == None:
+            distances.right_lane = None
+        node_center = self.get_sucessor_if_not_beginn_of_entry(node_center)
+        if node_center == None:
+            distances.current_lane = None
         while node_left != None or node_right != None or node_center != None:
-            if node_left != None:
-                if node_center.left != None:
-                    if self.are_parallel_lenes_in_same_direction(node_center.left, node_center):
+            if node_center != None:
+                if not moved_left and node_center.left != None:
+                    moved_left = True
+                    if self.are_parallel_lanes_in_same_direction(node_center.left, node_center):
                         node_left = node_center.left
+                        distances.left_lane = distances.current_lane
                     else:
                         node_left = None
                         distances.left_lane = None
-                else:
-                    node_left = node_center
 
-            distance += node.data.centerline_total_distance
-            node = self._next_lane_node(node)
-        return None if node is None else distance
+                if not moved_right and node_center.right != None:
+                    moved_right = True
+                    node_right = node_center.right
+                    distances.right_lane = distances.current_lane
+
+            if node_left != None:
+                if node_left.data.lane_subtype in (LaneSubtype.OFFRAMP, LaneSubtype.CONNECTINGRAMP):
+                    node_left = None
+                else:
+                    distances.left_lane += node_left.data.centerline_total_distance
+                    node_left = self.get_sucessor_if_not_beginn_of_entry(node_left)
+                    if node_left == None:
+                        distances.left_lane = None 
+
+            if node_right != None:
+                if node_right.data.lane_subtype in (LaneSubtype.OFFRAMP, LaneSubtype.CONNECTINGRAMP):
+                    node_right = None
+                else:
+                    distances.right_lane += node_right.data.centerline_total_distance
+                    node_right = self.get_sucessor_if_not_beginn_of_entry(node_right)
+                    if node_right == None:
+                        distances.right_lane = None 
+
+            if node_center != None:
+                if node_center.data.lane_subtype in (LaneSubtype.OFFRAMP, LaneSubtype.CONNECTINGRAMP):
+                    node_center = None
+                else:
+                    distances.current_lane += node_center.data.centerline_total_distance
+                    node_center = self.get_sucessor_if_not_beginn_of_entry(node_center)
+                    if node_center == None:
+                        distances.current_lane = None
+        return distances
+
+    def get_sucessor_if_not_beginn_of_entry(self, node: LaneGraphNode):
+        if node != None:
+            successor = node.successor
+            if node.data.lane_subtype != LaneSubtype.ENTRY and (successor == None or successor.data.lane_subtype == LaneSubtype.ENTRY):
+                node = None
+            else:
+                node = successor
+        return node
+
 
     def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]:
         node = self._nodes[lane_id]
@@ -205,9 +256,9 @@ class LaneGraph:
         )
     
     def are_parallel_lanes_in_same_direction(self, node1: LaneGraphNode, node2: LaneGraphNode) -> bool:
-        same_direction_distance = np.linalg.norm(node1.data._centerline_matrix[0], node2.data._centerline_matrix[0])
-        same_direction_distance += np.linalg.norm(node1.data._centerline_matrix[-1], node2.data._centerline_matrix[-1]) 
-        opposite_direction_distance = np.linalg.norm(node1.data._centerline_matrix[0], node2.data._centerline_matrix[-1])
-        opposite_direction_distance += np.linalg.norm(node1.data._centerline_matrix[-1], node2.data._centerline_matrix[0]) 
+        same_direction_distance = np.linalg.norm(node1.data.centerline_matrix[0] - node2.data.centerline_matrix[0])
+        same_direction_distance += np.linalg.norm(node1.data.centerline_matrix[-1] - node2.data.centerline_matrix[-1]) 
+        opposite_direction_distance = np.linalg.norm(node1.data.centerline_matrix[0] - node2.data.centerline_matrix[-1])
+        opposite_direction_distance += np.linalg.norm(node1.data.centerline_matrix[-1] - node2.data.centerline_matrix[0]) 
         return same_direction_distance < opposite_direction_distance
 
