@@ -18,8 +18,9 @@ from state_builder import create_state
 
 
 class OSI3Extractor:
-    def __init__(self, ip_addr: str, port: int = 48198):
+    def __init__(self, ip_addr: str, port: int = 48198, ego_id: int = 0):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
+        self.ego_id = ego_id
         self._stop_requested = False
         self.thread = threading.Thread(target=self._thread_target)
         self.lane_data: dict[int, LaneData] = {}
@@ -55,7 +56,8 @@ class OSI3Extractor:
             if len(ground_truth.lane) != 0:
                 self.update_lane_data(ground_truth)
             self.host_vehicle_id = ground_truth.host_vehicle_id.value
-            self._current_state = create_state(ground_truth, self.lane_graph, self.road_manager)
+            self._current_state = create_state(ground_truth, self.lane_graph,
+                                               self.road_manager, self.ego_id)
             vehicle = self._current_state.moving_objects[0]
             print(f"Ego lane: {vehicle.lane_ids[0]}", end=", ")
 
@@ -81,10 +83,12 @@ class OSI3Extractor:
 
 
 def main():
-    if len(sys.argv) != 3:
-        print(f"Usage:\n{sys.argv[0]} <listen ip> <port>")
+    if len(sys.argv) != 4:
+        print(f"Usage:\n{sys.argv[0]} <listen ip> <port> <ego vehicle id>")
         sys.exit(1)
-    osi_extractor = OSI3Extractor(sys.argv[1], int(sys.argv[2]))
+    osi_extractor = OSI3Extractor(ip_addr=sys.argv[1],
+                                  port=sys.argv[2],
+                                  ego_id=sys.argv[3])
     with osi_extractor:
         for _ in range(100):
             try:
