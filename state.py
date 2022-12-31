@@ -42,48 +42,47 @@ class RoadState:
     same_road_as_ego: bool
 
     def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: int):
-        # TODO: this variable naming is confusing when considering same_road_as_ego
-        ego_position = osi_vector_to_ndarray(mos.location)
+        current_position = osi_vector_to_ndarray(mos.location)
         # TODO: What happens if we have no assigned lane
-        ego_lane_id = mos.lane_ids[0]
-        ego_lane_data = lane_graph.get_lane_data(ego_lane_id)
-        if ego_lane_data is None:
+        current_lane_id = mos.lane_ids[0]
+        current_lane_data = lane_graph.get_lane_data(current_lane_id)
+        if current_lane_data is None:
             raise RuntimeError(f"Moving object {mos.simulator_id} is on lane"
-                               f" {ego_lane_id} which is not meant for driving")
-        centerline_projection = ego_lane_data.project_onto_centerline(
-            ego_position,
+                               f" {current_lane_id} which is not meant for driving")
+        centerline_projection = current_lane_data.project_onto_centerline(
+            current_position,
         )
-        self.curvature = ego_lane_data.curvature.get_road_curvature(
+        self.curvature = current_lane_data.curvature.get_road_curvature(
             centerline_projection.segment_index, centerline_projection.segment_progress)
-        self.curvature_change = ego_lane_data.curvature.get_road_curvature_change(
+        self.curvature_change = current_lane_data.curvature.get_road_curvature_change(
             centerline_projection.segment_index
         )
         self.distance_to_lane_end = lane_graph.distance_to_lane_end(
-            ego_lane_id,
-            ego_position,
+            current_lane_id,
+            current_position,
         )
         self.distance_to_next_exit = lane_graph.distance_to_next_exit(
-            ego_lane_id,
-            ego_position,
+            current_lane_id,
+            current_position,
         )
         self.distance_to_ramp = lane_graph.distance_to_ramp(
-            ego_lane_id,
-            ego_position,
+            current_lane_id,
+            current_position,
         )
-        ego_lane_left, ego_lane_right = (
-            ego_lane_data.boundary_points_for_position(ego_position)
+        lane_boundary_left, lane_boundary_right = (
+            current_lane_data.boundary_points_for_position(current_position)
         )
-        self.lane_width = np.linalg.norm(ego_lane_left - ego_lane_right)
+        self.lane_width = np.linalg.norm(lane_boundary_left - lane_boundary_right)
         self.lane_position = (
-            np.linalg.norm(ego_position - ego_lane_left) / self.lane_width
+            np.linalg.norm(current_position - lane_boundary_left) / self.lane_width
         )
-        self.lane_type = lane_graph.neighbor_lane_types(ego_lane_id)
-        self.left_lane_marking = ego_lane_data.get_lane_boundary_marking_for_position(ego_position, left=True)
-        self.right_lane_marking = ego_lane_data.get_lane_boundary_marking_for_position(ego_position, left=False)
-        self.road_on_junction = ego_lane_data.lane_type == LaneType.INTERSECTION
+        self.lane_type = lane_graph.neighbor_lane_types(current_lane_id)
+        self.left_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=True)
+        self.right_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=False)
+        self.road_on_junction = current_lane_data.lane_type == LaneType.INTERSECTION
         _, _, self.road_z = centerline_projection.projected_point
         self.road_angle = angle_of_segment(
-            ego_lane_data.centerline_matrix, centerline_projection.segment_index)
+            current_lane_data.centerline_matrix, centerline_projection.segment_index)
         if YAW_IS_ALREADY_RELATIVE:
             self.relative_object_heading_angle = mos.orientation.yaw
         else:
