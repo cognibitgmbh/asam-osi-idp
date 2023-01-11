@@ -1,7 +1,8 @@
 from osi3.osi_groundtruth_pb2 import GroundTruth
+from osi3.osi_object_pb2 import MovingObject
+
 from lanegraph import LaneGraph
 from road import RoadManager
-
 from state import MovingObjectState, State, StationaryObstacle
 
 
@@ -17,12 +18,12 @@ def _create_moving_object_states(
     road_manager: RoadManager,
     ego_id: int,
 ):
-    ego_object = next((o for o in ground_truth.moving_object
-                       if o.id.value == ego_id), None)
+    ego_object: 'MovingObject | None' = next(
+        (o for o in ground_truth.moving_object if o.id.value == ego_id), None)
     if ego_object is None:
         raise RuntimeError(
             f"Could not find ego vehicle (expected id: {ego_id})")
-    ego_state = MovingObjectState(ego_object)
+    ego_state = MovingObjectState(ego_object, lane_graph, road_manager, None)
     ego_road_id = ego_state.road_id
     return [ego_state] + [MovingObjectState(o, lane_graph, road_manager, ego_road_id)
                           for o in ground_truth.moving_object

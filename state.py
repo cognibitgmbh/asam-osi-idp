@@ -41,7 +41,8 @@ class RoadState:
     road_on_junction: bool
     same_road_as_ego: bool
 
-    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: int):
+    # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
+    def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: 'int | None'):
         current_position = osi_vector_to_ndarray(mos.location)
         # TODO: What happens if we have no assigned lane
         current_lane_id = mos.lane_ids[0]
@@ -89,7 +90,10 @@ class RoadState:
             self.relative_object_heading_angle = (
                 mos.orientation.yaw - self.road_angle + np.pi) % (2*np.pi) - np.pi
         self.road_on_highway = road.on_highway
-        self.same_road_as_ego = road.road_id == ego_road_id
+        if ego_road_id is None:
+            self.same_road_as_ego = True
+        else:
+            self.same_road_as_ego = road.road_id == ego_road_id
         # TODO: initialize everything else
 
 
@@ -119,7 +123,8 @@ class MovingObjectState:
     service_vehicle_illumination: int
     road_state: RoadState
 
-    def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager, ego_road_id: int):
+    # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
+    def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager, ego_road_id: 'int | None'):
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
