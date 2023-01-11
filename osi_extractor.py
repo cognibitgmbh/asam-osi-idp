@@ -87,8 +87,8 @@ def main():
         print(f"Usage:\n{sys.argv[0]} <listen ip> <port> <ego vehicle id>")
         sys.exit(1)
     osi_extractor = OSI3Extractor(ip_addr=sys.argv[1],
-                                  port=sys.argv[2],
-                                  ego_id=sys.argv[3])
+                                  port=int(sys.argv[2]),
+                                  ego_id=int(sys.argv[3]))
     with osi_extractor:
         for _ in range(100):
             try:
