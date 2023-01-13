@@ -2,6 +2,7 @@ import sys
 import threading
 import time
 from os import environ
+from typing import Callable
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
@@ -17,8 +18,9 @@ from state import State
 from state_builder import create_state
 
 
+
 class OSI3Extractor:
-    def __init__(self, ip_addr: str, port: int = 48198):
+    def __init__(self, co_simulation_callback: Callable[[State], int], ip_addr: str, port: int = 48198):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self._stop_requested = False
         self.thread = threading.Thread(target=self._thread_target)
@@ -33,6 +35,10 @@ class OSI3Extractor:
                                              int(environ['OUTPUT_PORT']))
         else:
             self.output = None
+
+        self.last_lane_id = 999
+
+        self._co_simulation_callback = co_simulation_callback
 
     def __enter__(self):
         self.ground_truth_iterator.open()
@@ -87,8 +93,9 @@ def main():
     if len(sys.argv) != 3:
         print(f"Usage:\n{sys.argv[0]} <listen ip> <port>")
         sys.exit(1)
-    osi_extractor = OSI3Extractor(sys.argv[1], int(sys.argv[2]))
+    osi_extractor = OSI3Extractor(lambda state: 3, sys.argv[1], int(sys.argv[2]))
     with osi_extractor:
+
         for _ in range(100):
             try:
                 time.sleep(1)
