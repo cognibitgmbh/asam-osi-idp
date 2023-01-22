@@ -1,10 +1,12 @@
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from os import environ
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
+import signals
 from lane import LaneData
 from lanegraph import LaneGraph
 from osi_iterator import UDPGroundTruthIterator
@@ -18,6 +20,13 @@ from state_builder import create_state
 
 
 class OSI3Extractor:
+    ego_id: int
+    lane_data: dict[int, LaneData]
+    lane_graph: LaneGraph
+    road_manager: RoadManager
+    signal_assignment_builder: signals.RoadAssignmentBuilder
+    signal_assignment: Mapping[int, list[signals.RoadSignal]]
+
     def __init__(self, ip_addr: str, port: int = 48198, ego_id: int = 0):
         self.ground_truth_iterator = UDPGroundTruthIterator(ip_addr, port)
         self.ego_id = ego_id
@@ -26,6 +35,8 @@ class OSI3Extractor:
         self.lane_data: dict[int, LaneData] = {}
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
+        self.signal_assignment_builder = signals.RoadAssignmentBuilder(self.lane_graph, self.road_manager)
+        self.signal_assignment = {}
         self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
             self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
@@ -70,6 +81,11 @@ class OSI3Extractor:
             self.lane_data[id] = LaneData(gt, lane)
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
+        self.signal_assignment_builder = signals.RoadAssignmentBuilder(
+            self.lane_graph,
+            self.road_manager,
+        )
+        self.signal_assignment = self.signal_assignment_builder.build_assignment(gt)
 
     def send_raw_update(self, raw_update: RawUpdate):
         if self.output is None:
