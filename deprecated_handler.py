@@ -16,5 +16,7 @@ def get_all_assigned_lane_ids(moving_obj: MovingObject) -> Optional[int]:
     assigned_lane_id = moving_obj.moving_object_classification.assigned_lane_id
     if use_deprecated_assigned_lane:
         assigned_lane_id = moving_obj.assigned_lane_id
-    return [lane.value for lane in assigned_lane_id]
-
+    return_value = [lane.value for lane in assigned_lane_id]
+    if return_value == [18446744073709551615]: # ~ [-1]
+        return []
+    return return_value
