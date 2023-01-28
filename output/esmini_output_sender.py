@@ -22,11 +22,21 @@ class EsminiOutputSender(OutputSender):
 
     def open(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.frame_nrs: map[int, int] = {}
+        self.frame_nrs: map[int, int] = {} # TODO This seems usless
 
     def close(self):
         if self.socket is not None:
             self.socket.close()
+    
+    def send_empty_update(self, object_id: int):
+        # This function can be used, to trigger the next timestep in esmini, without sending payload
+        message = struct.pack(
+            'ii',
+            1,    # version
+            0,    # message type = 'NO_INPUT'
+        )
+        self.socket.sendto(
+            message, (self.address, self.baseport + object_id))
 
     def send_driver_update(self, driver_update: DriverUpdate):
         frame_nr = self.frame_nrs.get(driver_update.id, 0)
