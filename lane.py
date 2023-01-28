@@ -150,9 +150,6 @@ class LaneData:
     ) -> tuple[Optional[ProjectionResult], Optional[ProjectionResult]]:
         if np.array_equal(self._last_position_for_boundaries_projection, position):
             return self._cached_boundaries_projections
-        elif np.allclose(self._last_position_for_boundaries_projection, position):
-            raise Exception(
-                "I would assume that the two positions are either equal or very different, but not close")
         self._last_position_for_boundaries_projection = position
         self._cached_boundaries_projections = (
             closest_projected_point(position, self.left_boundary_matrix),
