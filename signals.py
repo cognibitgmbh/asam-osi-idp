@@ -1,19 +1,28 @@
-import math
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Optional
 
+import math
+from dataclasses import dataclass
+
 import numpy as np
+from osi3.osi_trafficsign_pb2 import TrafficSign
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
-from .roadsignal import RoadSignal
-from ..geometry import angle_between_vectors, euclidean_distance, Orientation, osi_vector_to_ndarray, ProjectionResult
-from ..lanegraph import LaneGraph, LaneGraphNode
-from ..road import RoadManager
-
+from geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray, euclidean_distance
+from lanegraph import LaneGraphNode, LaneGraph
+from road import RoadManager
 
 SIGN_VIEW_NORMAL = np.array([1, 0, 0])
 SIGN_MAX_ANGLE = math.pi / 4.0          # 45 degrees
+
+
+@dataclass(frozen=True)
+class RoadSignal:
+    road_id: int
+    road_s: tuple[float,float]
+    closest_lane: LaneGraphNode
+    osi_signal: TrafficSign
 
 
 def lane_check_sign_orientation(lane: LaneGraphNode, orientation: Orientation, projection: ProjectionResult) -> bool:
