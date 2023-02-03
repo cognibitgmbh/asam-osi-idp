@@ -1,26 +1,25 @@
 from collections.abc import Mapping
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Optional
 
 import math
-from dataclasses import dataclass
-
 import numpy as np
-from osi3.osi_trafficsign_pb2 import TrafficSign
 from osi3.osi_groundtruth_pb2 import GroundTruth
+from osi3.osi_trafficsign_pb2 import TrafficSign
 
 from geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray, euclidean_distance
 from lanegraph import LaneGraphNode, LaneGraph
 from road import RoadManager
 
 SIGN_VIEW_NORMAL = np.array([1, 0, 0])
-SIGN_MAX_ANGLE = math.pi / 4.0          # 45 degrees
+SIGN_MAX_ANGLE = math.pi / 4.0  # 45 degrees
 
 
 @dataclass(frozen=True)
 class RoadSignal:
     road_id: int
-    road_s: tuple[float,float]
+    road_s: tuple[float, float]
     closest_lane: LaneGraphNode
     osi_signal: TrafficSign
 
@@ -69,7 +68,7 @@ class RoadAssignmentBuilder:
             projection = lane.data.project_onto_centerline(position)
             if not lane_check_sign_orientation(lane, orientation, projection):
                 continue
-            distance = euclidean_distance(position, projection.projected_point, ignore_z=True)
+            distance = np.linalg.norm(position - projection.projected_point)
             if closest_lane is None or distance < closest_distance:
                 closest_lane = lane
                 closest_distance = distance
