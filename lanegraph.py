@@ -262,3 +262,5 @@ class LaneGraph:
         opposite_direction_distance += np.linalg.norm(node1.data.centerline_matrix[-1] - node2.data.centerline_matrix[0]) 
         return same_direction_distance < opposite_direction_distance
 
+    def iterate_nodes(self) -> Iterable[LaneGraphNode]:
+        return self._nodes.values()

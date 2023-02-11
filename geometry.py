@@ -3,7 +3,7 @@ import math
 from typing import Union
 
 import numpy as np
-from osi3.osi_common_pb2 import Vector3d
+from osi3.osi_common_pb2 import Orientation3d, Vector3d
 
 
 def euclidean_distance(vec1: Vector3d, vec2: Vector3d, ignore_z: bool = True) -> float:
@@ -19,8 +19,6 @@ def osi_vector_to_ndarray(vec: Vector3d) -> np.ndarray:
 def angle_of_segment(line: np.ndarray, segment_id: int) -> float:
     vector = line[segment_id + 1] - line[segment_id]
     return np.arctan2(vector[0], vector[1])
-
-
 
 
 @dataclass
@@ -95,3 +93,33 @@ def closest_projected_point(
         segment_index=relevant_indexes[i],
         segment_progress=t_relevant[i],
     )
+
+class Orientation:
+    _matrix: np.ndarray
+
+    @staticmethod
+    def from_osi(osi_obj: Orientation3d) -> 'Orientation':
+        return Orientation(yaw=osi_obj.yaw, pitch=osi_obj.pitch, roll=osi_obj.roll)
+
+    def __init__(self, yaw: float, pitch: float, roll: float):
+        # matrix construction is based on:
+        # https://opensimulationinterface.github.io/osi-documentation/#_coordinate_systems_and_reference_points
+        sin_yaw = np.sin(yaw)
+        sin_pitch = np.sin(pitch)
+        sin_roll = np.sin(roll)
+        cos_yaw = np.cos(yaw)
+        cos_pitch = np.cos(pitch)
+        cos_roll = np.cos(roll)
+        self._matrix = np.array([
+            [cos_pitch*cos_yaw, cos_pitch*sin_yaw, -sin_pitch],
+            [sin_roll*sin_pitch*cos_yaw - cos_roll*sin_yaw, sin_roll*sin_pitch*sin_yaw + cos_roll*cos_yaw, sin_roll*cos_pitch],
+            [cos_roll*sin_pitch*cos_yaw + sin_roll*sin_yaw, cos_roll*sin_pitch*sin_yaw - sin_roll*cos_yaw, cos_roll*cos_pitch],
+        ])
+
+    def rotate_vector(self, vector: np.ndarray) -> np.ndarray:
+        return self._matrix @ vector
+
+
+def angle_between_vectors(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    cosine =  np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+    return float(np.arccos(cosine))
