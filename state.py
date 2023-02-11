@@ -94,6 +94,10 @@ class RoadState:
             self.same_road_as_ego = True
         else:
             self.same_road_as_ego = road.road_id == ego_road_id
+        
+        self.speed_limit = None
+        self.traffic_signs = None
+        self.traffic_lights = None
         # TODO: initialize everything else
 
 
@@ -106,7 +110,6 @@ class MovingObjectState:
     velocity: Vector3d
     acceleration: Vector3d
     orientation: Orientation3d
-    relative_object_heading_angle: float
     heading_angle: float
     lane_ids: list[int]
     road_id: int
@@ -146,6 +149,13 @@ class MovingObjectState:
         self.service_vehicle_illumination = light_state.service_vehicle_illumination
         # TODO: Replace 'None' with actual values
         self.heading_angle = None
+
+        if len(self.lane_ids) == 0 or lane_graph._nodes.get(self.lane_ids[0]) == None:
+            self.road_id = None
+            self.road_s = None
+            self.road_state = None
+            return
+
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
         road_of_lane = road_manager.get_road(lane_graph_node)
         self.road_id = road_of_lane.road_id
