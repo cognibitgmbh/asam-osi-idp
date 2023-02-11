@@ -1,10 +1,12 @@
 import sys
 import threading
 import time
+from collections.abc import Mapping
 from os import environ
 
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
+import signals
 from lane import LaneData
 from lanegraph import LaneGraph
 from osi_iterator import UDPGroundTruthIterator
@@ -23,6 +25,9 @@ class SynchronOSI3Ectractor:
         self.lane_data: dict[int, LaneData] = {}
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
+        self.signal_assignment_builder = signals.RoadAssignmentBuilder(self.lane_graph, self.road_manager)
+        self.signal_assignment = {}
+        self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
             self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
         elif esmini_ip_addr is not None and esmini_port is not None:
@@ -60,6 +65,11 @@ class SynchronOSI3Ectractor:
             self.lane_data[id] = LaneData(gt, lane)
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
+        self.signal_assignment_builder = signals.RoadAssignmentBuilder(
+            self.lane_graph,
+            self.road_manager,
+        )
+        self.signal_assignment = self.signal_assignment_builder.build_assignment(gt)
 
     def send_raw_update(self, raw_update: RawUpdate):
         if self.output is None:
@@ -119,9 +129,9 @@ def main():
     
     with osi_extractor:
         for _ in range(40):
-            time.sleep(0.3)
-           # osi_extractor.send_empty_update(0)
-            osi_extractor.send_driver_update(DriverUpdate(0,0.4, 0.0, 0.3))
+            time.sleep(0.1)
+            osi_extractor.send_empty_update(0)
+           # osi_extractor.send_driver_update(DriverUpdate(0,0.4, 0.0, 0.3))
             print(osi_extractor.get_next_state())
 
 
