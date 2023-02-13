@@ -1,0 +1,77 @@
+
+<?xml version="1.2" encoding="UTF-8"?>
+<OpenDRIVE>
+    <header revMajor="1" revMinor="1" name="" version="1.00" date="Mon May 8 12:00:00 2020" north="0" south="0" east="0" west="0.00"/>
+    <road id="1" name="arc" length="6283.185307179586477" junction="-1">
+        <link>
+          <predecessor elementType="road" elementId="1" contactPoint="end" />
+            <successor elementType="road" elementId="1" contactPoint="start" />
+        </link>
+        <planView>
+            <geometry s="0" x="0.0" y="0.0" hdg="0.0" length="6283.185307179586477">
+                <arc curvature="1.0000000000000000e-3"/>
+            </geometry>
+        </planView>
+        <elevationProfile/>
+        <lateralProfile/>
+        <lanes>
+            <laneSection s="0">
+                <center>
+                    <lane id="0" type="none" level="true">
+                        <link>
+                        </link>
+                        <roadMark sOffset="0" type="none" weight="standard" color="standard" width="0.13"/>
+                    </lane>
+                </center>
+                <right>
+                  <lane id="-1" type="shoulder" level="false">
+                      <link>
+                        <predecessor id="-1"/>
+                          <successor id="-1"/>
+                      </link>
+                      <width sOffset="0" a="0.75" b="0" c="0" d="0"/>
+                      <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13"/>
+                  </lane>
+                    <lane id="-2" type="driving" level="true">
+                        <link>
+                          <predecessor id="-2"/>
+                            <successor id="-2"/>
+                        </link>
+                        <width sOffset="0" a="3.50" b="0" c="0" d="0"/>
+                        <roadMark sOffset="0" type="broken" weight="standard" color="standard" width="0.13"/>
+                        <speed sOffset="0" max="39.44"/>
+                    </lane>
+                    <lane id="-3" type="driving" level="true">
+                        <link>
+                          <predecessor id="-3"/>
+                            <successor id="-3"/>
+                        </link>
+                        <width sOffset="0" a="3.50" b="0" c="0" d="0"/>
+                        <roadMark sOffset="0" type="broken" weight="standard" color="standard" width="0.13"/>
+                        <speed sOffset="0" max="39.44"/>
+                    </lane>
+                    <lane id="-4" type="driving" level="true">
+                        <link>
+                          <predecessor id="-4"/>
+                            <successor id="-4"/>
+                        </link>
+                        <width sOffset="0" a="3.75" b="0" c="0" d="0"/>
+                        <roadMark sOffset="0" type="solid" weight="standard" color="standard" width="0.13"/>
+                        <speed sOffset="0" max="39.44"/>
+                    </lane>
+                    <lane id="-5" type="shoulder" level="false">
+                        <link>
+                          <predecessor id="-5"/>
+                            <successor id="-5"/>
+                        </link>
+                        <width sOffset="0" a="3.0" b="0" c="0" d="0"/>
+                    </lane>
+                 </right>
+            </laneSection>
+        </lanes>
+        <objects>
+        </objects>
+        <signals>
+        </signals>
+    </road>
+</OpenDRIVE>
