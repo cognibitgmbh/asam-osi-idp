@@ -113,7 +113,7 @@ class MovingObjectState:
     heading_angle: float
     lane_ids: list[int]
     road_id: int
-    road_s: tuple[float, float]
+    road_s: Optional[tuple[float, float]]
     indicator_signal: int
     brake_light: int
     front_fog_light: int
@@ -124,7 +124,7 @@ class MovingObjectState:
     license_plate_illumination_rear: int
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
-    road_state: RoadState
+    road_state: Optional[RoadState]
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager, ego_road_id: 'int | None'):
@@ -159,6 +159,10 @@ class MovingObjectState:
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
         road_of_lane = road_manager.get_road(lane_graph_node)
         self.road_id = road_of_lane.road_id
+        if lane_graph_node.data.centerline_matrix.shape[0] <= 0:
+            self.road_s = None
+            self.road_state = None
+            return
         self.road_s = road_of_lane.object_road_s(
             lane_graph_node, osi_vector_to_ndarray(self.location))
         self.road_state = RoadState(lane_graph, self, road_of_lane, ego_road_id)

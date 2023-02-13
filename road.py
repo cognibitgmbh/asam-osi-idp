@@ -66,6 +66,8 @@ class RoadManager:
     def _add_all_parallel_lanes_to_road(self, rightmost_lane: LaneGraphNode, road: Road):
         lane = rightmost_lane
         while lane is not None:
+            if lane.id in self.lane_id_to_road_map:
+                return
             self.lane_id_to_road_map[lane.id] = road
             lane = self._same_road_left_neighbor(lane)
 
@@ -131,6 +133,8 @@ class RoadManager:
     def _same_road_successor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_successor = lane.successor
         if road_independent_successor is None:
+            return None
+        if road_independent_successor.id in self.lane_id_to_road_map:
             return None
         if self._are_successing_lanes_same_road(lane.data.osi_lane.classification, road_independent_successor.data.osi_lane.classification):
             return road_independent_successor
