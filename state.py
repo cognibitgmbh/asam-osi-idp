@@ -112,8 +112,9 @@ class MovingObjectState:
     orientation: Orientation3d
     heading_angle: float
     lane_ids: list[int]
-    road_id: int
+    road_id: Optional[int]
     road_s: Optional[tuple[float, float]]
+    road_state: Optional[RoadState]
     indicator_signal: int
     brake_light: int
     front_fog_light: int
@@ -158,6 +159,11 @@ class MovingObjectState:
 
         lane_graph_node = lane_graph._nodes[self.lane_ids[0]]
         road_of_lane = road_manager.get_road(lane_graph_node)
+        if road_of_lane is None:
+            self.road_id = None
+            self.road_s = None
+            self.road_state = None
+            return
         self.road_id = road_of_lane.road_id
         if lane_graph_node.data.centerline_matrix.shape[0] <= 0:
             self.road_s = None

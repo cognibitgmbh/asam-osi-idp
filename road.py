@@ -169,5 +169,8 @@ class RoadManager:
                 self._create_new_road_starting_with(lane, next_road_id)
                 next_road_id += 1
 
-    def get_road(self, lane: LaneGraphNode) -> Road:
-        return self.lane_id_to_road_map[lane.id]
+    def get_road(self, lane: LaneGraphNode) -> Optional[Road]:
+        if lane.id in self.lane_id_to_road_map:
+            return self.lane_id_to_road_map[lane.id]
+        else:
+            return None
