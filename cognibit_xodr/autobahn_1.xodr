@@ -521,7 +521,7 @@
             <width sOffset="0" a="0.75" b="-0.015" c="0" d="0"/>
             <roadMark sOffset="0" type="solid" weight="standard" color="standard" material="standard" width="0.15"/>
           </lane>
-          <lane id="-7" type="entry" level="true">
+          <lane id="-7" type="onRamp" level="true">
             <link>
               <predecessor id="-2"/>
             </link>
