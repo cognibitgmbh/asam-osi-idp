@@ -25,7 +25,6 @@ class SynchronOSI3Ectractor:
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
         self.signal_assignment_builder = signals.RoadAssignmentBuilder(self.lane_graph, self.road_manager)
-        self.signal_assignment = {}
         self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
             raise NotImplementedError("Output to file is not implemented yet")
@@ -69,7 +68,7 @@ class SynchronOSI3Ectractor:
             self.lane_graph,
             self.road_manager,
         )
-        self.signal_assignment = self.signal_assignment_builder.build_assignment(gt)
+        self.signal_assignment_builder.assign_signs_to_roads(gt)
 
     def send_driver_update(self, driver_input_update: DriverInputUpdate):
         if self.output is None:

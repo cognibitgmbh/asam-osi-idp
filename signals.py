@@ -28,8 +28,7 @@ class RoadAssignmentBuilder:
         self.lane_graph = lane_graph
         self.road_manager = road_manager
 
-    def build_assignment(self, gt: GroundTruth) -> Mapping[int, list[RoadSignal]]:
-        assignment = {}
+    def assign_signs_to_roads(self, gt: GroundTruth):
         for osi_sign in gt.traffic_sign:
             main_sign_base = osi_sign.main_sign.base
             position = osi_vector_to_ndarray(main_sign_base.position)
@@ -49,11 +48,6 @@ class RoadAssignmentBuilder:
                 osi_signal=osi_sign,
             )
             road.signals.append(road_signal)
-            if road.road_id not in assignment:
-                assignment[road.road_id] = [road_signal]
-            else:
-                assignment[road.road_id].append(road_signal)
-        return MappingProxyType(assignment)
 
     def _find_closest_lane(self, position: np.ndarray, orientation: Orientation) -> Optional[LaneGraphNode]:
         closest_lane = None
