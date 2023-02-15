@@ -178,10 +178,14 @@ class LaneData:
         )
         return distance
 
-    def start_point(self) -> np.array:
+    def start_point(self) -> Optional[np.array]:
+        if self.centerline_matrix.shape[0] == 0:
+            return None
         return self.centerline_matrix[0, :]
 
-    def end_point(self) -> np.array:
+    def end_point(self) -> Optional[np.array]:
+        if self.centerline_matrix.shape[0] == 0:
+            return None
         return self.centerline_matrix[-1, :]
 
     def segment_points(self, segment_index: int) -> tuple[np.ndarray, np.ndarray]:

@@ -94,10 +94,14 @@ class LaneGraph:
     def _compute_successors(self):
         for id, node in self._nodes.items():
             end = node.data.end_point()
+            if end is None:
+                continue
             for other_id, other_node in self._nodes.items():
                 if id == other_id:
                     continue
                 start = other_node.data.start_point()
+                if start is None:
+                    continue
                 if np.linalg.norm(start - end) <= SUCCESSOR_MAX_DISTANCE:
                     self._add_successor(pre=node, succ=other_node)
 

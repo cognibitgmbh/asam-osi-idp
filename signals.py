@@ -49,6 +49,9 @@ class RoadAssignmentBuilder:
                 print(f'WARNING: Could not assign traffic sign {osi_sign.id.value} to a lane')
                 continue
             road = self.road_manager.get_road(lane)
+            if road is None:
+                print(f'WARNING: Could not assign traffic sign {osi_sign.id.value} to a road')
+                continue
             road_signal = RoadSignal(
                 road_id=road.road_id,
                 road_s=road.object_road_s(lane, position),
