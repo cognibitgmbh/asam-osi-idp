@@ -12,6 +12,7 @@ from road import RoadManager, RoadSignal
 
 SIGN_VIEW_NORMAL = np.array([1, 0, 0])
 SIGN_MAX_ANGLE = math.pi / 4.0  # 45 degrees
+MAX_SIGN_DISTANCE = 10.0
 
 
 def lane_check_sign_orientation(lane: LaneGraphNode, orientation: Orientation, projection: ProjectionResult) -> bool:
@@ -33,7 +34,7 @@ class RoadAssignmentBuilder:
             main_sign_base = osi_sign.main_sign.base
             position = osi_vector_to_ndarray(main_sign_base.position)
             orientation = Orientation.from_osi(main_sign_base.orientation)
-            lane = self._find_closest_lane(position, orientation)
+            lane = self._find_closest_lane(position, orientation, max_distance=MAX_SIGN_DISTANCE)
             if lane is None:
                 print(f'WARNING: Could not assign traffic sign {osi_sign.id.value} to a lane')
                 continue
@@ -49,15 +50,16 @@ class RoadAssignmentBuilder:
             )
             road.signals.append(road_signal)
 
-    def _find_closest_lane(self, position: np.ndarray, orientation: Orientation) -> Optional[LaneGraphNode]:
+    def _find_closest_lane(self, position: np.ndarray, orientation: Orientation, max_distance: float = float('inf')) \
+            -> Optional[LaneGraphNode]:
         closest_lane = None
-        closest_distance = float('inf')
+        closest_distance = max_distance
         for lane in self.lane_graph.iterate_nodes():
             projection = lane.data.project_onto_centerline(position)
             if not lane_check_sign_orientation(lane, orientation, projection):
                 continue
             distance = np.linalg.norm(position - projection.projected_point)
-            if closest_lane is None or distance < closest_distance:
+            if distance < closest_distance:
                 closest_lane = lane
                 closest_distance = distance
         return closest_lane
