@@ -1,3 +1,5 @@
+# This is deprecated
+
 import struct
 from typing import Optional, TextIO
 
@@ -25,7 +27,7 @@ class OsiTraceOutputSender(OutputSender):
             self.file.close()
             self.file = None
 
-    def send_driver_update(self, driver_update: DriverUpdate):
+    def send_driver_input_update(self, driver_update: DriverUpdate):
         traffic_update = TrafficUpdate()
 
         isu = traffic_update.internal_state.add()

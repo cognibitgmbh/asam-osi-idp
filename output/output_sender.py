@@ -1,11 +1,15 @@
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
+
+from output.esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
 
 
 class OutputSender(ABC):
-    @abstractclassmethod
-    def send_driver_update(self, DriverUpdate):
+    @classmethod
+    @abstractmethod
+    def send_driver_input_update(self, driver_input_update: DriverInputUpdate):
         pass
 
-    @abstractclassmethod
-    def send_raw_update(self, DriverUpdate):
+    @classmethod
+    @abstractmethod
+    def send_xyh_speed_steering_update(self, xyh_speed_steering_update: XYHSpeedSteeringUpdate):
         pass

@@ -1,3 +1,4 @@
+import math
 import sys
 import threading
 import time
@@ -10,10 +11,8 @@ import signals
 from lane import LaneData
 from lanegraph import LaneGraph
 from osi_iterator import UDPGroundTruthIterator
-from output.driver_update import DriverUpdate
+from output.esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
 from output.esmini_output_sender import EsminiOutputSender
-from output.osi_trace_output_sender import OsiTraceOutputSender
-from output.raw_update import RawUpdate
 from road import RoadManager
 from state import State
 from state_builder import create_state
@@ -29,7 +28,8 @@ class SynchronOSI3Ectractor:
         self.signal_assignment = {}
         self._current_state: State = None
         if environ.get('OUTPUT_FILE') is not None:
-            self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
+            raise NotImplementedError("Output to file is not implemented yet")
+            # self.output = OsiTraceOutputSender(environ['OUTPUT_FILE'])
         elif esmini_ip_addr is not None and esmini_port is not None:
             self.output = EsminiOutputSender(esmini_ip_addr, esmini_port)
         else:
@@ -71,15 +71,15 @@ class SynchronOSI3Ectractor:
         )
         self.signal_assignment = self.signal_assignment_builder.build_assignment(gt)
 
-    def send_raw_update(self, raw_update: RawUpdate):
+    def send_driver_update(self, driver_input_update: DriverInputUpdate):
         if self.output is None:
             raise RuntimeError("No output sender defined") 
-        self.output.send_raw_update(raw_update)
+        self.output.send_driver_input_update(driver_input_update)
 
-    def send_driver_update(self, driver_update: DriverUpdate):
+    def send_xyh_speed_steering_update(self, xyh_speed_steering_update: XYHSpeedSteeringUpdate):
         if self.output is None:
-            raise RuntimeError("No output sender defined") 
-        self.output.send_driver_update(driver_update)
+            raise RuntimeError("No output sender defined")
+        self.output.send_xyh_speed_steering_update(xyh_speed_steering_update)
 
     def send_empty_update(self, object_id: int):
         if self.output is None:
@@ -128,11 +128,23 @@ def main():
         sys.exit(1)
     
     with osi_extractor:
-        for _ in range(40):
-            time.sleep(0.1)
-            osi_extractor.send_empty_update(0)
-           # osi_extractor.send_driver_update(DriverUpdate(0,0.4, 0.0, 0.3))
-            print(osi_extractor.get_next_state())
+        x = 0.0
+        y = 0.0
+        h = 0.0
+        speed = 200.0
+        steering = 0.5
+
+        for _ in range(400000):
+            x += 0.01
+            y += 0.001
+            h += 0.0001
+            h = h % (2 * math.pi)
+            #time.sleep(0.3)
+            # osi_extractor.send_empty_update(0)
+      #      osi_extractor.send_driver_update(DriverInputUpdate(0,0.4, 0.0, 0.3))
+            osi_extractor.send_xyh_speed_steering_update(XYHSpeedSteeringUpdate(0, x, y, h, speed, steering, True))
+            m = osi_extractor.get_next_state().moving_objects[0]
+            print(f"{m.road_id}")
 
 
 if __name__ == "__main__":
