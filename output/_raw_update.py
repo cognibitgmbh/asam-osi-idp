@@ -1,14 +1,16 @@
+# This is deprecated
+
 from dataclasses import dataclass
 from typing import Optional
 
+from osi3.osi_common_pb2 import Vector3d, Orientation3d
+
 
 @dataclass
-class DriverUpdate:
+class RawUpdate:
     id: int
-
-    steer: float
-    brake: float
-    throttle: float
+    position: Vector3d
+    orientation: Orientation3d
 
     indicator_state: Optional[int]
     brake_light_state: Optional[int]
@@ -23,9 +25,8 @@ class DriverUpdate:
 
     def __init__(self,
                  id: int,
-                 steer: float,
-                 brake: float,
-                 throttle: float,
+                 position: Vector3d,
+                 orientation: Orientation3d,
                  indicator_state: Optional[int] = None,
                  brake_light_state: Optional[int] = None,
                  front_fog_light: Optional[int] = None,
@@ -38,9 +39,8 @@ class DriverUpdate:
                  service_vehicle_illumination: Optional[int] = None):
 
         self.id = id
-        self.steer = steer
-        self.brake = brake
-        self.throttle = throttle
+        self.position = position
+        self.orientation = orientation
         self.indicator_state = indicator_state
         self.brake_light_state = brake_light_state
         self.front_fog_light = front_fog_light
