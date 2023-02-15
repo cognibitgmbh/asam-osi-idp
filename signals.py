@@ -1,27 +1,17 @@
 from collections.abc import Mapping
-from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Optional
 
 import math
 import numpy as np
 from osi3.osi_groundtruth_pb2 import GroundTruth
-from osi3.osi_trafficsign_pb2 import TrafficSign
 
-from geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray, euclidean_distance
+from geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray
 from lanegraph import LaneGraphNode, LaneGraph
-from road import RoadManager
+from road import RoadManager, RoadSignal
 
 SIGN_VIEW_NORMAL = np.array([1, 0, 0])
 SIGN_MAX_ANGLE = math.pi / 4.0  # 45 degrees
-
-
-@dataclass(frozen=True)
-class RoadSignal:
-    road_id: int
-    road_s: tuple[float, float]
-    closest_lane: LaneGraphNode
-    osi_signal: TrafficSign
 
 
 def lane_check_sign_orientation(lane: LaneGraphNode, orientation: Orientation, projection: ProjectionResult) -> bool:
@@ -58,6 +48,7 @@ class RoadAssignmentBuilder:
                 closest_lane=lane,
                 osi_signal=osi_sign,
             )
+            road.signals.append(road_signal)
             if road.road_id not in assignment:
                 assignment[road.road_id] = [road_signal]
             else:

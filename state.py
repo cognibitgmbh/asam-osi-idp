@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Optional
+
+import speedlimit_logic
 from geometry import angle_of_segment, osi_vector_to_ndarray
 
 import numpy as np
@@ -30,9 +32,6 @@ class RoadState:
     lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
     left_lane_marking: LaneBoundaryMarkingType
     right_lane_marking: LaneBoundaryMarkingType
-    speed_limit: int  # Or more info?
-    traffic_signs: list[TrafficSign]  # Based on sensor?
-    traffic_lights: list[TrafficLight]  # Based on sensor?
     road_z: float
     road_angle: float
     relative_object_heading_angle: float
@@ -40,6 +39,9 @@ class RoadState:
     road_on_highway: bool
     road_on_junction: bool
     same_road_as_ego: bool
+    speed_limit: Optional[int] = None  # Or more info?
+    traffic_signs: list[TrafficSign] = None  # Based on sensor?
+    traffic_lights: list[TrafficLight] = None # Based on sensor?
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: 'int | None'):
@@ -94,8 +96,8 @@ class RoadState:
             self.same_road_as_ego = True
         else:
             self.same_road_as_ego = road.road_id == ego_road_id
-        
-        self.speed_limit = None
+        ignore_exit_speed_signs = self.road_on_highway and self.lane_type.current_lane[1] != LaneSubtype.EXIT
+        self.speed_limit = speedlimit_logic.calculate_speedlimit(road.signals, mos.road_s, ignore_exit_speed_signs)
         self.traffic_signs = None
         self.traffic_lights = None
         # TODO: initialize everything else

@@ -1,7 +1,10 @@
+from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
 import osi3.osi_lane_pb2 as lane_pb2
+
+from osi3.osi_trafficsign_pb2 import TrafficSign
 from lane import LaneSubtype
 
 from lanegraph import LaneGraph, LaneGraphNode
@@ -16,12 +19,21 @@ SUBTYPE_CONNECTINGRAMP = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name[
     "SUBTYPE_CONNECTINGRAMP"].number
 
 
+@dataclass(frozen=True)
+class RoadSignal:
+    road_id: int
+    road_s: tuple[float, float]
+    closest_lane: LaneGraphNode
+    osi_signal: TrafficSign
+
+
 class Road:
     road_id: int
     _rightmost_lanes: list[LaneGraphNode]
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
     on_highway: bool
+    signals: list[RoadSignal] = []
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -91,7 +103,8 @@ class RoadManager:
         new_road._total_distance = np.sum(new_road._rightmost_lanes_lengths)
 
     # TODO: Don't know if this is good
-    def _same_road_right_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
+    @staticmethod
+    def _same_road_right_neighbor(lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.right
         if road_independent_neighbor is None:
             return None
@@ -100,7 +113,8 @@ class RoadManager:
         return road_independent_neighbor
 
     # TODO: Don't know if this is good
-    def _same_road_left_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
+    @staticmethod
+    def _same_road_left_neighbor(lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.left
         if road_independent_neighbor is None:
             return None
@@ -108,7 +122,8 @@ class RoadManager:
             return None
         return road_independent_neighbor
 
-    def _are_successing_lanes_same_road(self, predecessor, successor) -> bool:
+    @staticmethod
+    def _are_successing_lanes_same_road(predecessor, successor) -> bool:
         successor_subtype = successor.subtype
         predecessor_subtype = predecessor.subtype
         if predecessor.type != successor.type:
@@ -116,17 +131,21 @@ class RoadManager:
         if successor_subtype == predecessor_subtype:
             return True
         # TODO: maybe also allow NORMAL -> ONRAMP?
-        if predecessor_subtype == LaneSubtype.NORMAL.value and successor_subtype in (LaneSubtype.NORMAL.value, LaneSubtype.EXIT.value):
+        if predecessor_subtype == LaneSubtype.NORMAL.value and successor_subtype in (
+                LaneSubtype.NORMAL.value, LaneSubtype.EXIT.value):
             return True
         if predecessor_subtype == LaneSubtype.EXIT.value and successor_subtype == LaneSubtype.EXIT.value:
             return True
-        if predecessor_subtype == LaneSubtype.ENTRY.value and successor_subtype in (LaneSubtype.NORMAL.value, LaneSubtype.ENTRY.value, LaneSubtype.EXIT.value):
+        if predecessor_subtype == LaneSubtype.ENTRY.value and successor_subtype in (
+                LaneSubtype.NORMAL.value, LaneSubtype.ENTRY.value, LaneSubtype.EXIT.value):
             return True
         if predecessor_subtype == LaneSubtype.ONRAMP.value and successor_subtype == LaneSubtype.ONRAMP.value:
             return True
-        if predecessor_subtype == LaneSubtype.OFFRAMP.value and successor_subtype in (LaneSubtype.ONRAMP.value, LaneSubtype.ONRAMP.value):
+        if predecessor_subtype == LaneSubtype.OFFRAMP.value and successor_subtype in (
+                LaneSubtype.ONRAMP.value, LaneSubtype.ONRAMP.value):
             return True
-        if predecessor_subtype == LaneSubtype.CONNECTINGRAMP.value and successor_subtype == LaneSubtype.CONNECTINGRAMP.value:
+        if predecessor_subtype == LaneSubtype.CONNECTINGRAMP.value \
+                and successor_subtype == LaneSubtype.CONNECTINGRAMP.value:
             return True
         return False
 
@@ -136,7 +155,8 @@ class RoadManager:
             return None
         if road_independent_successor.id in self.lane_id_to_road_map:
             return None
-        if self._are_successing_lanes_same_road(lane.data.osi_lane.classification, road_independent_successor.data.osi_lane.classification):
+        if self._are_successing_lanes_same_road(lane.data.osi_lane.classification,
+                                                road_independent_successor.data.osi_lane.classification):
             return road_independent_successor
         else:
             return None
@@ -145,7 +165,8 @@ class RoadManager:
         road_independent_predecessor = lane.predecessor
         if road_independent_predecessor is None:
             return None
-        if self._are_successing_lanes_same_road(road_independent_predecessor.data.osi_lane.classification, lane.data.osi_lane.classification):
+        if self._are_successing_lanes_same_road(road_independent_predecessor.data.osi_lane.classification,
+                                                lane.data.osi_lane.classification):
             return road_independent_predecessor
         else:
             return None
