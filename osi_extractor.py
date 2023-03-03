@@ -17,7 +17,7 @@ from road import RoadManager
 from state import State
 from state_builder import create_state
 
-class SynchronOSI3Ectractor:
+class SynchronOSI3Extractor:
     def __init__(self, rec_ip_addr: str, rec_port: int = 48198, ego_id: int = 0, esmini_ip_addr: str = None, esmini_port: int = None):
         self.ground_truth_iterator = UDPGroundTruthIterator(rec_ip_addr, rec_port)
         self.ego_id = ego_id
@@ -86,7 +86,7 @@ class SynchronOSI3Ectractor:
         self.output.send_empty_update(object_id)
 
 
-class AsynchronOSI3Extractor(SynchronOSI3Ectractor):
+class AsynchronOSI3Extractor(SynchronOSI3Extractor):
 
     def __init__(self, ip_addr: str, port: int = 48198, ego_id: int = 0, esmini_ip_addr: str = None, esmini_port: int = None):
         super(AsynchronOSI3Extractor, self).__init__(ip_addr, port, ego_id, esmini_ip_addr, esmini_port)
@@ -113,11 +113,11 @@ class AsynchronOSI3Extractor(SynchronOSI3Ectractor):
 
 def main():
     if len(sys.argv) == 4:
-        osi_extractor = SynchronOSI3Ectractor(rec_ip_addr=sys.argv[1],
+        osi_extractor = SynchronOSI3Extractor(rec_ip_addr=sys.argv[1],
                                               rec_port=int(sys.argv[2]),
                                               ego_id=int(sys.argv[3]))
     elif len(sys.argv) == 6:
-        osi_extractor = SynchronOSI3Ectractor(rec_ip_addr=sys.argv[1],
+        osi_extractor = SynchronOSI3Extractor(rec_ip_addr=sys.argv[1],
                                               rec_port=int(sys.argv[2]),
                                               ego_id=int(sys.argv[3]),
                                               esmini_ip_addr=sys.argv[4],
