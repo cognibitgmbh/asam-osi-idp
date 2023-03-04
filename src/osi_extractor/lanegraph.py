@@ -3,7 +3,7 @@ from typing import Generic, Iterable, Optional, TypeVar
 
 import numpy as np
 
-from lane import LaneData, LaneSubtype, LaneType
+from .lane import LaneData, LaneSubtype, LaneType
 
 
 SUCCESSOR_MAX_DISTANCE = 0.1

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from output.esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
+from .esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
 
 
 class OutputSender(ABC):

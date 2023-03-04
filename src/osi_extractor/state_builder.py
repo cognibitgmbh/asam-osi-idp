@@ -1,9 +1,9 @@
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_object_pb2 import MovingObject
 
-from lanegraph import LaneGraph
-from road import RoadManager
-from state import MovingObjectState, State, StationaryObstacle
+from .lanegraph import LaneGraph
+from .road import RoadManager
+from .state import MovingObjectState, State, StationaryObstacle
 
 
 def create_state(ground_truth: GroundTruth, lane_graph: LaneGraph, road_manager: RoadManager, ego_id: int):

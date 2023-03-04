@@ -1,10 +1,11 @@
 import sys
 from typing import Optional
 
-from lane import LaneSubtype
-from road import RoadSignal
 import osi3.osi_lane_pb2 as lane_pb2
 import osi3.osi_trafficsign_pb2 as sign_pb2
+
+from .lane import LaneSubtype
+from .road import RoadSignal
 
 SUBTYPE_ENTRY = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name["SUBTYPE_ENTRY"].number
 

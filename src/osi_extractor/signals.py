@@ -6,9 +6,9 @@ import math
 import numpy as np
 from osi3.osi_groundtruth_pb2 import GroundTruth
 
-from geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray
-from lanegraph import LaneGraphNode, LaneGraph
-from road import RoadManager, RoadSignal
+from .geometry import Orientation, ProjectionResult, angle_between_vectors, osi_vector_to_ndarray
+from .lanegraph import LaneGraphNode, LaneGraph
+from .road import RoadManager, RoadSignal
 
 SIGN_VIEW_NORMAL = np.array([1, 0, 0])
 SIGN_MAX_ANGLE = math.pi / 4.0  # 45 degrees
