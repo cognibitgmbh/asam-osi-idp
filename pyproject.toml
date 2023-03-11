@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "osi_extractor"
+version = "0.0.1"
+description = "Extract OSI signals from esmini"
+authors = [
+    {name = "Marvin Heinzelmann", email = "marvin.heinzelmann@t-online.de"},
+    {name = "Raphael Schilling", email = "raphaelschilling@web.de"},
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "open-simulation-interface @ https://github.com/OpenSimulationInterface/open-simulation-interface/archive/refs/tags/v3.5.0.zip",
+]

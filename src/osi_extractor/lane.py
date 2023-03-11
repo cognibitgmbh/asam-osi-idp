@@ -8,8 +8,8 @@ from osi3.osi_common_pb2 import Vector3d
 from osi3.osi_groundtruth_pb2 import GroundTruth
 from osi3.osi_lane_pb2 import Lane, LaneBoundary
 
-from curvature import Curvature
-from geometry import (ProjectionResult, closest_projected_point,
+from .curvature import Curvature
+from .geometry import (ProjectionResult, closest_projected_point,
                       osi_vector_to_ndarray)
 
 

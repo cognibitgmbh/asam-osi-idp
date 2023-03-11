@@ -3,19 +3,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-import speedlimit_logic
-from geometry import angle_of_segment, osi_vector_to_ndarray
-
 import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
 from osi3.osi_object_pb2 import MovingObject
 from osi3.osi_trafficlight_pb2 import TrafficLight
 from osi3.osi_trafficsign_pb2 import TrafficSign
 
-from deprecated_handler import get_all_assigned_lane_ids
-from lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
-from lanegraph import LaneGraph, NeighboringLaneSignal
-from road import Road, RoadManager
+import osi_extractor.speedlimit_logic as speedlimit_logic
+from .deprecated_handler import get_all_assigned_lane_ids
+from .geometry import angle_of_segment, osi_vector_to_ndarray
+from .lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
+from .lanegraph import LaneGraph, NeighboringLaneSignal
+from .road import Road, RoadManager
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 

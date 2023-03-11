@@ -3,8 +3,8 @@
 import socket
 import struct
 
-from output.esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
-from output.output_sender import OutputSender
+from .esmini_update import DriverInputUpdate, XYHSpeedSteeringUpdate
+from .output_sender import OutputSender
 
 
 input_modes = {

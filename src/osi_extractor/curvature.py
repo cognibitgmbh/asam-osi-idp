@@ -1,6 +1,5 @@
 from typing import List
 from osi3.osi_lane_pb2 import Lane
-from geometry import euclidean_distance
 import numpy as np
 
 

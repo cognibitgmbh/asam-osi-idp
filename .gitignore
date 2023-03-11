@@ -4,4 +4,4 @@ venv
 .vscode
 traffic_update_trace.osi
 .env
-
+.idea

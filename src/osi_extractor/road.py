@@ -5,9 +5,9 @@ import numpy as np
 import osi3.osi_lane_pb2 as lane_pb2
 
 from osi3.osi_trafficsign_pb2 import TrafficSign
-from lane import LaneSubtype
+from .lane import LaneSubtype
 
-from lanegraph import LaneGraph, LaneGraphNode
+from .lanegraph import LaneGraph, LaneGraphNode
 
 SUBTYPE_ENTRY = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name["SUBTYPE_ENTRY"].number
 SUBTYPE_EXIT = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name["SUBTYPE_EXIT"].number
