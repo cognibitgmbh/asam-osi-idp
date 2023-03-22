@@ -11,12 +11,17 @@ from osi3.osi_trafficsign_pb2 import TrafficSign
 
 import osi_extractor.speedlimit_logic as speedlimit_logic
 from .deprecated_handler import get_all_assigned_lane_ids
-from .geometry import angle_of_segment, osi_vector_to_ndarray
+from .geometry import angle_of_segment, osi_vector_to_ndarray, get_distance_to_reference_point
 from .lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from .lanegraph import LaneGraph, NeighboringLaneSignal
 from .road import Road, RoadManager
 
-YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
+YAW_IS_ALREADY_RELATIVE = False  # TODO: decide on where to set such flags
+# cf. documentation https://opensimulationinterface.github.io/open-simulation-interface/structosi3_1_1BaseMoving.html#a9d5923d72125e326e53083eb57551667
+# UPDATE: Mit YAW_IS_ALREADY_RELATIVE wird noch etwas drauf gerechnet. Das sollte gerade dann nicht passieren. Daher ~> False
+# OLD: yaw is relative to parent frame and only absolute when in global frame. Since we always expect a driveway, a relative yaw if the default.
+
+
 
 
 @dataclass(init=False)
