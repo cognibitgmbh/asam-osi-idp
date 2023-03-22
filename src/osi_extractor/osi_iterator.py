@@ -42,7 +42,8 @@ class UDPGroundTruthIterator(OSI3GroundTruthIterator):
         self.socket.bind((self.bind_address, self.port))
 
     def close(self):
-        os.close(self.pipe_write)
+        #os.close(self.pipe_write)
+        pass
 
     def __iter__(self) -> Iterator[GroundTruth]:
         while True:
