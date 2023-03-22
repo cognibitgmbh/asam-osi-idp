@@ -80,10 +80,12 @@ class RoadState:
         lane_boundary_left, lane_boundary_right = (
             current_lane_data.boundary_points_for_position(current_position)
         )
+        pr = current_lane_data.project_onto_centerline(current_position)
+        current_position_on_center_line = pr.projected_point
+
         self.lane_width = np.linalg.norm(lane_boundary_left - lane_boundary_right)
-        self.lane_position = (
-            np.linalg.norm(current_position - lane_boundary_left) / self.lane_width
-        )
+        self.lane_position = get_distance_to_reference_point(current_position, mos.orientation.yaw, current_position_on_center_line)
+
         self.lane_type = lane_graph.neighbor_lane_types(current_lane_id)
         self.left_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=True)
         self.right_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=False)
