@@ -10,7 +10,7 @@ def create_state(ground_truth: GroundTruth, lane_graph: LaneGraph, road_manager:
     m_o_list = _create_moving_object_states(ground_truth, lane_graph,
                                             road_manager, ego_id)
     s_o_list = _create_static_obstacle_states(ground_truth)
-    return State(m_o_list, s_o_list, ground_truth.host_vehicle_id.value)
+    return State(m_o_list, s_o_list, ground_truth.host_vehicle_id.value, str(ground_truth.timestamp))
 
 def _create_moving_object_states(
     ground_truth: GroundTruth,

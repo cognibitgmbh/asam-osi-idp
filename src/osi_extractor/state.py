@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -194,3 +195,4 @@ class State:
     moving_objects: list[MovingObjectState]
     stationary_obstacles: list[StationaryObstacle]
     host_vehicle_id: int
+    timestamp: str
