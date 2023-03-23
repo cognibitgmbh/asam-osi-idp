@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -19,9 +20,7 @@ from .road import Road, RoadManager
 
 YAW_IS_ALREADY_RELATIVE = False  # TODO: decide on where to set such flags
 # cf. documentation https://opensimulationinterface.github.io/open-simulation-interface/structosi3_1_1BaseMoving.html#a9d5923d72125e326e53083eb57551667
-# UPDATE: Mit YAW_IS_ALREADY_RELATIVE wird noch etwas drauf gerechnet. Das sollte gerade dann nicht passieren. Daher ~> False
-# OLD: yaw is relative to parent frame and only absolute when in global frame. Since we always expect a driveway, a relative yaw if the default.
-
+# Note: According to the documentation orientation.yaw is relative when there is a parent frame. Esmini reports the yaw in an absolote reference frame.
 
 
 
@@ -80,11 +79,14 @@ class RoadState:
         lane_boundary_left, lane_boundary_right = (
             current_lane_data.boundary_points_for_position(current_position)
         )
-        pr = current_lane_data.project_onto_centerline(current_position)
-        current_position_on_center_line = pr.projected_point
+
+        def get_lane_position(position, yaw):
+            projection = current_lane_data.project_onto_centerline(position)
+            current_position_on_center_line = projection.projected_point
+            return get_distance_to_reference_point(position, yaw, current_position_on_center_line)
 
         self.lane_width = np.linalg.norm(lane_boundary_left - lane_boundary_right)
-        self.lane_position = get_distance_to_reference_point(current_position, mos.orientation.yaw, current_position_on_center_line)
+        self.lane_position = get_lane_position(current_position, mos.orientation.yaw)
 
         self.lane_type = lane_graph.neighbor_lane_types(current_lane_id)
         self.left_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=True)
@@ -141,9 +143,15 @@ class MovingObjectState:
         self.simulator_id = mo.id.value
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
-        self.location = mo.base.position
-        self.velocity = mo.base.velocity
-        self.acceleration = mo.base.acceleration
+        loc = copy.deepcopy(mo.base.position)
+        loc.y = -1 * loc.y
+        self.location = loc
+        vel = mo.base.velocity
+        vel.y = -1 * vel.y
+        self.velocity = vel
+        acc = mo.base.acceleration
+        acc.y = -1 * acc.y
+        self.acceleration = acc
         self.orientation = mo.base.orientation
         self.lane_ids = get_all_assigned_lane_ids(mo)
         light_state = mo.vehicle_classification.light_state
