@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import math
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 from osi3.osi_common_pb2 import Orientation3d, Vector3d
@@ -32,7 +32,7 @@ def project_onto_line_segments(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray
-) -> tuple[Union[float, np.ndarray], np.ndarray]:
+) -> Tuple[Union[float, np.ndarray], np.ndarray]:
     """
     Project point p onto one or more line segments defined by seg_1 and seg_2.
 

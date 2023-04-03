@@ -1,5 +1,5 @@
 import sys
-from typing import Optional
+from typing import Optional, List, Tuple
 
 import osi3.osi_lane_pb2 as lane_pb2
 import osi3.osi_trafficsign_pb2 as sign_pb2
@@ -20,7 +20,7 @@ SPEED_SIGNS = {TYPE_SPEED_LIMIT_BEGIN,
                TYPE_SPEED_LIMIT_ZONE_END}
 
 
-def calculate_speedlimit(signals: list[RoadSignal], mo_road_s: tuple[float, float], ignore_exit_speed_signs: bool) \
+def calculate_speedlimit(signals: List[RoadSignal], mo_road_s: Tuple[float, float], ignore_exit_speed_signs: bool) \
         -> Optional[int]:
     # max integer
     latest_speedlimit: int = sys.maxsize

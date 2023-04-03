@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, Iterable, Optional, TypeVar
+from typing import Generic, Iterable, Optional, TypeVar, Dict, Tuple
 
 import numpy as np
 
@@ -48,7 +48,7 @@ class NeighboringLaneSignal(Generic[T]):
 
 
 class LaneGraph:
-    def __init__(self, lane_dict: dict[int, LaneData]):
+    def __init__(self, lane_dict: Dict[int, LaneData]):
         self._nodes = {id: LaneGraphNode(id=id, data=data) for id, data
                        in lane_dict.items() if data.lane_type.allows_for_driving()}
         for id, lane in lane_dict.items():
@@ -251,7 +251,7 @@ class LaneGraph:
         return node
 
 
-    def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]:
+    def neighbor_lane_types(self, lane_id: int) -> NeighboringLaneSignal[Tuple[LaneType, LaneSubtype]]:
         node = self._nodes[lane_id]
         return NeighboringLaneSignal(
             current_lane=node.data.type_info(),

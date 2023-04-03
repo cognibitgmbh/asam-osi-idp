@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple, List
 
 import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
@@ -34,7 +34,7 @@ class RoadState:
     distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
-    lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
+    lane_type: NeighboringLaneSignal[Tuple[LaneType, LaneSubtype]]
     left_lane_marking: LaneBoundaryMarkingType
     right_lane_marking: LaneBoundaryMarkingType
     road_z: float
@@ -45,8 +45,8 @@ class RoadState:
     road_on_junction: bool
     same_road_as_ego: bool
     speed_limit: Optional[int] = None  # Or more info?
-    traffic_signs: list[TrafficSign] = None  # Based on sensor?
-    traffic_lights: list[TrafficLight] = None # Based on sensor?
+    traffic_signs: List[TrafficSign] = None  # Based on sensor?
+    traffic_lights: List[TrafficLight] = None # Based on sensor?
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: 'int | None'):
@@ -120,9 +120,9 @@ class MovingObjectState:
     acceleration: Vector3d
     orientation: Orientation3d
     heading_angle: float
-    lane_ids: list[int]
+    lane_ids: List[int]
     road_id: Optional[int]
-    road_s: Optional[tuple[float, float]]
+    road_s: Optional[Tuple[float, float]]
     road_state: Optional[RoadState]
     indicator_signal: int
     brake_light: int
@@ -194,7 +194,7 @@ class StationaryObstacle:
 
 @dataclass
 class State:
-    moving_objects: list[MovingObjectState]
-    stationary_obstacles: list[StationaryObstacle]
+    moving_objects: List[MovingObjectState]
+    stationary_obstacles: List[StationaryObstacle]
     host_vehicle_id: int
     timestamp: str
