@@ -26,7 +26,14 @@ class LaneGraphNode:
         return (f"LaneGraphNode(id={self.id}, right={right}, left={left}"
                 f", predecessor={pre}, successor={succ})")
 
+    def __eq__(self, other):
+        if not isinstance(other, LaneGraphNode):
+            return False
+        return self.id == other.id
 
+    def __hash__(self):
+        return hash(self.id)
+    
 class MultipleNeighborsError(Exception):
     def __init__(self, lane_id: int, side: str):
         super().__init__()
