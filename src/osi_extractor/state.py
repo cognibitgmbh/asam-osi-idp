@@ -7,14 +7,13 @@ import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
 from osi3.osi_object_pb2 import MovingObject
 from osi3.osi_trafficlight_pb2 import TrafficLight
-from osi3.osi_trafficsign_pb2 import TrafficSign
 
 import osi_extractor.speedlimit_logic as speedlimit_logic
 from .deprecated_handler import get_all_assigned_lane_ids
 from .geometry import angle_of_segment, osi_vector_to_ndarray
 from .lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from .lanegraph import LaneGraph, NeighboringLaneSignal
-from .road import Road, RoadManager
+from .road import Road, RoadManager, RoadSignal
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -26,7 +25,7 @@ class RoadState:
     lane_width: float
     lane_position: float
     distance_to_lane_end: NeighboringLaneSignal[float]
-    distance_to_ramp: float
+    distance_to_ramp: NeighboringLaneSignal[float]
     distance_to_next_exit: Optional[float]
     lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
     left_lane_marking: LaneBoundaryMarkingType
@@ -39,13 +38,12 @@ class RoadState:
     road_on_junction: bool
     same_road_as_ego: bool
     speed_limit: Optional[int] = None  # Or more info?
-    traffic_signs: list[TrafficSign] = None  # Based on sensor?
+    traffic_signs: list[RoadSignal] = None  # Based on sensor?
     traffic_lights: list[TrafficLight] = None # Based on sensor?
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: 'int | None'):
         current_position = osi_vector_to_ndarray(mos.location)
-        # TODO: What happens if we have no assigned lane
         current_lane_id = mos.lane_ids[0]
         current_lane_data = lane_graph.get_lane_data(current_lane_id)
         if current_lane_data is None:
@@ -97,9 +95,8 @@ class RoadState:
             self.same_road_as_ego = road.road_id == ego_road_id
         ignore_exit_speed_signs = self.road_on_highway and self.lane_type.current_lane[1] != LaneSubtype.EXIT
         self.speed_limit = speedlimit_logic.calculate_speedlimit(road.signals, mos.road_s, ignore_exit_speed_signs)
-        self.traffic_signs = None
-        self.traffic_lights = None
-        # TODO: initialize everything else
+        self.traffic_signs = road.signals
+        self.traffic_lights = None # TODO should remove this
 
 
 @dataclass(init=False)
@@ -111,7 +108,6 @@ class MovingObjectState:
     velocity: Vector3d
     acceleration: Vector3d
     orientation: Orientation3d
-    heading_angle: float
     lane_ids: list[int]
     road_id: Optional[int]
     road_s: Optional[tuple[float, float]]
@@ -149,8 +145,6 @@ class MovingObjectState:
         self.license_plate_illumination_rear = light_state.license_plate_illumination_rear
         self.emergency_vehicle_illumination = light_state.emergency_vehicle_illumination
         self.service_vehicle_illumination = light_state.service_vehicle_illumination
-        # TODO: Replace 'None' with actual values
-        self.heading_angle = None
 
         if len(self.lane_ids) == 0 or lane_graph._nodes.get(self.lane_ids[0]) == None:
             self.road_id = None

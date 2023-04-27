@@ -102,7 +102,6 @@ class RoadManager:
         new_road._rightmost_lanes_lengths = np.array(temp_length)
         new_road._total_distance = np.sum(new_road._rightmost_lanes_lengths)
 
-    # TODO: Don't know if this is good
     def _same_road_right_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.right
         if road_independent_neighbor is None:
@@ -113,7 +112,6 @@ class RoadManager:
             return None
         return road_independent_neighbor
 
-    # TODO: Don't know if this is good
     def _same_road_left_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.left
         if road_independent_neighbor is None:
