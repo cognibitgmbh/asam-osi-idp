@@ -122,7 +122,6 @@ class MovingObjectState:
     license_plate_illumination_rear: int
     emergency_vehicle_illumination: int
     service_vehicle_illumination: int
-    road_state: Optional[RoadState]
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, mo: MovingObject, lane_graph: LaneGraph, road_manager: RoadManager, ego_road_id: 'int | None'):
