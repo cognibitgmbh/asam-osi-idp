@@ -33,7 +33,10 @@ class Road:
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
     on_highway: bool
-    signals: list[RoadSignal] = []
+    signals: list[RoadSignal]
+
+    def __init__(self):
+        self.signals = []
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -51,6 +54,22 @@ class Road:
         distance = np.sum(self._rightmost_lanes_lengths[:index + 1]).item()
         distance -= rightmost_lane.data.distance_to_end(projection)
         return distance, self._total_distance
+
+    def calculate_s_of_exit_end(self, exit_lane: LaneGraphNode) -> Optional[float]:
+        if exit_lane.data.lane_subtype != LaneSubtype.EXIT:
+            return None
+        if exit_lane not in self._rightmost_lanes:
+            return None
+        index = self._rightmost_lanes.index(exit_lane)
+        result = np.sum(self._rightmost_lanes_lengths[:index]).item()
+        current_lane = exit_lane
+        while current_lane.data.lane_subtype == LaneSubtype.EXIT:
+            result += current_lane.data.centerline_total_distance
+            index += 1
+            if index >= len(self._rightmost_lanes):
+                break
+            current_lane = self._rightmost_lanes[index]
+        return result
 
 
 class RoadManager:
@@ -102,24 +121,25 @@ class RoadManager:
         new_road._rightmost_lanes_lengths = np.array(temp_length)
         new_road._total_distance = np.sum(new_road._rightmost_lanes_lengths)
 
-    # TODO: Don't know if this is good
-    @staticmethod
-    def _same_road_right_neighbor(lane: LaneGraphNode) -> Optional[LaneGraphNode]:
+    def _same_road_right_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.right
         if road_independent_neighbor is None:
             return None
         elif road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
             return None
+        elif road_independent_neighbor.id in self.lane_id_to_road_map:
+            return None
         return road_independent_neighbor
 
-    # TODO: Don't know if this is good
-    @staticmethod
-    def _same_road_left_neighbor(lane: LaneGraphNode) -> Optional[LaneGraphNode]:
+    def _same_road_left_neighbor(self, lane: LaneGraphNode) -> Optional[LaneGraphNode]:
         road_independent_neighbor = lane.left
         if road_independent_neighbor is None:
             return None
         elif road_independent_neighbor.data.osi_lane.classification.type != lane.data.osi_lane.classification.type:
             return None
+        elif road_independent_neighbor.id in self.lane_id_to_road_map and lane.id not in self.lane_id_to_road_map:
+            raise Exception("This should not happen, since roads are created from right to left")
+            #return None
         return road_independent_neighbor
 
     @staticmethod
@@ -165,7 +185,9 @@ class RoadManager:
         road_independent_predecessor = lane.predecessor
         if road_independent_predecessor is None:
             return None
-        if self._are_successing_lanes_same_road(road_independent_predecessor.data.osi_lane.classification,
+        elif road_independent_predecessor.id in self.lane_id_to_road_map:
+            return None
+        elif self._are_successing_lanes_same_road(road_independent_predecessor.data.osi_lane.classification,
                                                 lane.data.osi_lane.classification):
             return road_independent_predecessor
         else:
@@ -182,13 +204,17 @@ class RoadManager:
         return True
 
     def _create_roads(self, lane_graph: LaneGraph):
+        last_next_road_id = -1
         next_road_id = 0
-        for lane_id, lane in lane_graph._nodes.items():
-            if lane.id in self.lane_id_to_road_map:
-                continue
-            if self._is_rightmost_beginning_lane(lane):
-                self._create_new_road_starting_with(lane, next_road_id)
-                next_road_id += 1
+        while next_road_id != last_next_road_id:
+            last_next_road_id = next_road_id
+            for lane_id, lane in lane_graph._nodes.items():
+                if lane.id in self.lane_id_to_road_map:
+                    continue
+                if self._is_rightmost_beginning_lane(lane):
+                    self._create_new_road_starting_with(lane, next_road_id)
+                    next_road_id += 1
+
 
     def get_road(self, lane: LaneGraphNode) -> Optional[Road]:
         if lane.id in self.lane_id_to_road_map:

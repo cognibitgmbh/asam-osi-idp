@@ -31,5 +31,4 @@ def _create_moving_object_states(
 
 
 def _create_static_obstacle_states(ground_truth: GroundTruth):
-    # TODO: Create Testcase for statonary obstacles
     return [StationaryObstacle(o.base.dimension, o.base.position) for o in ground_truth.stationary_object]

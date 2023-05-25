@@ -55,6 +55,8 @@ class RoadAssignmentBuilder:
         closest_lane = None
         closest_distance = max_distance
         for lane in self.lane_graph.iterate_nodes():
+            if lane.data.centerline_len < 2:
+                continue
             projection = lane.data.project_onto_centerline(position)
             if not lane_check_sign_orientation(lane, orientation, projection):
                 continue
