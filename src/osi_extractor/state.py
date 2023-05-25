@@ -94,7 +94,7 @@ class RoadState:
         else:
             self.same_road_as_ego = road.road_id == ego_road_id
         ignore_exit_speed_signs = self.road_on_highway and self.lane_type.current_lane[1] != LaneSubtype.EXIT
-        self.speed_limit = speedlimit_logic.calculate_speedlimit(road.signals, mos.road_s, ignore_exit_speed_signs)
+        self.speed_limit = speedlimit_logic.calculate_speedlimit(road, mos.road_s, ignore_exit_speed_signs)
         self.traffic_signs = road.signals
         self.traffic_lights = None # TODO should remove this
 
