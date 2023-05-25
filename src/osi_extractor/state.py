@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple, List
 
 import numpy as np
 from osi3.osi_common_pb2 import Dimension3d, Vector3d, Orientation3d
@@ -11,12 +12,17 @@ from osi3.osi_trafficsign_pb2 import TrafficSign
 
 import osi_extractor.speedlimit_logic as speedlimit_logic
 from .deprecated_handler import get_all_assigned_lane_ids
-from .geometry import angle_of_segment, osi_vector_to_ndarray
+from .geometry import angle_of_segment, osi_vector_to_ndarray, get_distance_to_reference_point
 from .lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from .lanegraph import LaneGraph, NeighboringLaneSignal
 from .road import Road, RoadManager
 
-YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
+YAW_IS_ALREADY_RELATIVE = False  # TODO: decide on where to set such flags
+# cf. documentation https://opensimulationinterface.github.io/open-simulation-interface/structosi3_1_1BaseMoving.html#a9d5923d72125e326e53083eb57551667
+# UPDATE: Mit YAW_IS_ALREADY_RELATIVE wird noch etwas drauf gerechnet. Das sollte gerade dann nicht passieren. Daher ~> False
+# OLD: yaw is relative to parent frame and only absolute when in global frame. Since we always expect a driveway, a relative yaw if the default.
+
+
 
 
 @dataclass(init=False)
@@ -28,7 +34,7 @@ class RoadState:
     distance_to_lane_end: NeighboringLaneSignal[float]
     distance_to_ramp: float
     distance_to_next_exit: Optional[float]
-    lane_type: NeighboringLaneSignal[tuple[LaneType, LaneSubtype]]
+    lane_type: NeighboringLaneSignal[Tuple[LaneType, LaneSubtype]]
     left_lane_marking: LaneBoundaryMarkingType
     right_lane_marking: LaneBoundaryMarkingType
     road_z: float
@@ -39,8 +45,8 @@ class RoadState:
     road_on_junction: bool
     same_road_as_ego: bool
     speed_limit: Optional[int] = None  # Or more info?
-    traffic_signs: list[TrafficSign] = None  # Based on sensor?
-    traffic_lights: list[TrafficLight] = None # Based on sensor?
+    traffic_signs: List[TrafficSign] = None  # Based on sensor?
+    traffic_lights: List[TrafficLight] = None # Based on sensor?
 
     # if ego_road_id is None, the state object will assume that this moving object is the ego vehicle
     def __init__(self, lane_graph: LaneGraph, mos: MovingObjectState, road: Road, ego_road_id: 'int | None'):
@@ -74,10 +80,12 @@ class RoadState:
         lane_boundary_left, lane_boundary_right = (
             current_lane_data.boundary_points_for_position(current_position)
         )
+        pr = current_lane_data.project_onto_centerline(current_position)
+        current_position_on_center_line = pr.projected_point
+
         self.lane_width = np.linalg.norm(lane_boundary_left - lane_boundary_right)
-        self.lane_position = (
-            np.linalg.norm(current_position - lane_boundary_left) / self.lane_width
-        )
+        self.lane_position = get_distance_to_reference_point(current_position, mos.orientation.yaw, current_position_on_center_line)
+
         self.lane_type = lane_graph.neighbor_lane_types(current_lane_id)
         self.left_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=True)
         self.right_lane_marking = current_lane_data.get_lane_boundary_marking_for_position(current_position, left=False)
@@ -112,9 +120,9 @@ class MovingObjectState:
     acceleration: Vector3d
     orientation: Orientation3d
     heading_angle: float
-    lane_ids: list[int]
+    lane_ids: List[int]
     road_id: Optional[int]
-    road_s: Optional[tuple[float, float]]
+    road_s: Optional[Tuple[float, float]]
     road_state: Optional[RoadState]
     indicator_signal: int
     brake_light: int
@@ -186,6 +194,7 @@ class StationaryObstacle:
 
 @dataclass
 class State:
-    moving_objects: list[MovingObjectState]
-    stationary_obstacles: list[StationaryObstacle]
+    moving_objects: List[MovingObjectState]
+    stationary_obstacles: List[StationaryObstacle]
     host_vehicle_id: int
+    timestamp: str

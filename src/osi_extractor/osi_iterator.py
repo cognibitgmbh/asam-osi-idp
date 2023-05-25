@@ -40,24 +40,16 @@ class UDPGroundTruthIterator(OSI3GroundTruthIterator):
 
     def open(self):
         self.socket.bind((self.bind_address, self.port))
-        self.pipe_read, self.pipe_write = os.pipe()
 
     def close(self):
-        os.close(self.pipe_write)
+        #os.close(self.pipe_write)
+        pass
 
     def __iter__(self) -> Iterator[GroundTruth]:
         while True:
             expected_slice_id: int = 1
             message_bytes = b""
             while True:
-                ready, _, _ = select.select(
-                    [self.socket, self.pipe_read], [], [])
-                if self.pipe_read in ready:
-                    os.close(self.pipe_read)
-                    self.socket.close()
-                    return
-                elif self.socket not in ready:
-                    continue
                 udp_package = self.read()
                 slice_id: int = self.parse_int(udp_package[0:4])
                 last_slice = (slice_id == -expected_slice_id)

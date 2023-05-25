@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple, List, Dict
 
 import numpy as np
 import osi3.osi_lane_pb2 as lane_pb2
@@ -22,18 +22,18 @@ SUBTYPE_CONNECTINGRAMP = lane_pb2._LANE_CLASSIFICATION_SUBTYPE.values_by_name[
 @dataclass(frozen=True)
 class RoadSignal:
     road_id: int
-    road_s: tuple[float, float]
+    road_s: Tuple[float, float]
     closest_lane: LaneGraphNode
     osi_signal: TrafficSign
 
 
 class Road:
     road_id: int
-    _rightmost_lanes: list[LaneGraphNode]
+    _rightmost_lanes: List[LaneGraphNode]
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
     on_highway: bool
-    signals: list[RoadSignal] = []
+    signals: List[RoadSignal] = []
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -44,7 +44,7 @@ class Road:
                     f"Lane with id:{lane.id} seems to be not part of road with id: {self.road_id}")
         return current_lane
 
-    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> tuple[float, float]:
+    def object_road_s(self, lane: LaneGraphNode, position: np.ndarray) -> Tuple[float, float]:
         rightmost_lane: LaneGraphNode = self._get_rightmost_roadlane(lane)
         index = self._rightmost_lanes.index(rightmost_lane)
         projection = rightmost_lane.data.project_onto_centerline(position)
@@ -54,7 +54,7 @@ class Road:
 
 
 class RoadManager:
-    lane_id_to_road_map: dict[int, Road] = {}
+    lane_id_to_road_map: Dict[int, Road] = {}
 
     def __init__(self, lane_graph: LaneGraph) -> None:
         self._create_roads(lane_graph)

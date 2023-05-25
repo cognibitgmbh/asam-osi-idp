@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 
-from typing import Iterable, Optional, Sequence
+from typing import Iterable, Optional, Sequence, Tuple
 
 import numpy as np
 from osi3.osi_common_pb2 import Vector3d
@@ -87,7 +87,7 @@ def boundaries_to_ndarray(
 class LaneData:
     _last_position_for_boundaries_projection: Optional[np.ndarray] = np.array(
         [float("nan"), float("nan"), float("nan")])
-    _cached_boundaries_projections: tuple[Optional[ProjectionResult],
+    _cached_boundaries_projections: Tuple[Optional[ProjectionResult],
                                           Optional[ProjectionResult]] = (None, None)
 
     def __init__(self, gt: GroundTruth, osi_lane: Lane):
@@ -160,7 +160,7 @@ class LaneData:
     def boundary_points_for_position(
         self,
         position: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         left_projection, right_projection = self._cached_boundary_points_for_position(
             position)
         left = left_projection.projected_point
@@ -188,10 +188,10 @@ class LaneData:
             return None
         return self.centerline_matrix[-1, :]
 
-    def segment_points(self, segment_index: int) -> tuple[np.ndarray, np.ndarray]:
+    def segment_points(self, segment_index: int) -> Tuple[np.ndarray, np.ndarray]:
         return self.centerline_matrix[segment_index], self.centerline_matrix[segment_index + 1]
 
-    def type_info(self) -> tuple[LaneType, LaneSubtype]:
+    def type_info(self) -> Tuple[LaneType, LaneSubtype]:
         return (self.lane_type, self.lane_subtype)
 
     def get_lane_boundary_marking_for_position(self, position: np.ndarray, left: bool) -> LaneBoundaryMarkingType:

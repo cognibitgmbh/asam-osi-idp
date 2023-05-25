@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import math
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 from osi3.osi_common_pb2 import Orientation3d, Vector3d
@@ -18,7 +18,7 @@ def osi_vector_to_ndarray(vec: Vector3d) -> np.ndarray:
 
 def angle_of_segment(line: np.ndarray, segment_id: int) -> float:
     vector = line[segment_id + 1] - line[segment_id]
-    return np.arctan2(vector[0], vector[1])
+    return np.arctan2(vector[1], vector[0])
 
 
 @dataclass
@@ -32,7 +32,7 @@ def project_onto_line_segments(
     p: np.ndarray,
     seg_1: np.ndarray,
     seg_2: np.ndarray
-) -> tuple[Union[float, np.ndarray], np.ndarray]:
+) -> Tuple[Union[float, np.ndarray], np.ndarray]:
     """
     Project point p onto one or more line segments defined by seg_1 and seg_2.
 
@@ -123,3 +123,40 @@ class Orientation:
 def angle_between_vectors(vec1: np.ndarray, vec2: np.ndarray) -> float:
     cosine =  np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
     return float(np.arccos(cosine))
+
+
+
+##########################################################################
+# TODO From cb_utils, organize libraries! Put back into cognibot repo
+def get_distance_to_reference_point(
+    vehicle_location , heading: float, reference_location
+) -> float:
+    v_heading = np.array([math.cos(heading), math.sin(heading), 0.0])
+    v_orthogonal = np.array(
+        [
+            reference_location[0] - vehicle_location[0],
+            reference_location[1] - vehicle_location[1],
+            0.0,
+        ]
+    )
+
+    absolute_distance = norm(v_orthogonal)
+
+    cross_product = np.cross(v_heading, v_orthogonal)
+
+    if cross_product[2] < 0:
+        signed_distance = absolute_distance
+    else:
+        signed_distance = absolute_distance * (-1.0)
+
+    return signed_distance
+
+def norm(x):
+    if x.size == 2:
+        norm = np.sqrt(x[0] ** 2 + x[1] ** 2)
+    elif x.size == 3:
+        norm = np.sqrt(x[0] ** 2 + x[1] ** 2 + x[2] ** 2)
+    else:
+        raise ValueError("Wrong dimensions for norm calculation.")
+
+    return norm

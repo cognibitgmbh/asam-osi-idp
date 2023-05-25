@@ -19,7 +19,7 @@ class SynchronOSI3Extractor:
     def __init__(self, rec_ip_addr: str, rec_port: int = 48198, ego_id: int = 0, esmini_ip_addr: str = None, esmini_port: int = None):
         self.ground_truth_iterator = UDPGroundTruthIterator(rec_ip_addr, rec_port)
         self.ego_id = ego_id
-        self.lane_data: dict[int, LaneData] = {}
+        self.lane_data: Dict[int, LaneData] = {}
         self.lane_graph = LaneGraph(self.lane_data)
         self.road_manager = RoadManager(self.lane_graph)
         self.signal_assignment_builder = signals.RoadAssignmentBuilder(self.lane_graph, self.road_manager)
