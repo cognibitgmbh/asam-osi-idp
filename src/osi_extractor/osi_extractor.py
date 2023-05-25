@@ -53,7 +53,6 @@ class SynchronOSI3Extractor:
         state = create_state(ground_truth, self.lane_graph,
                                            self.road_manager, self.ego_id)
         vehicle = state.moving_objects[0]
-        print(f"Ego lane: {vehicle.lane_ids[0]}", end=", ")
         return state
 
     def update_lane_data(self, gt: GroundTruth):

@@ -33,7 +33,10 @@ class Road:
     _rightmost_lanes_lengths: np.ndarray
     _total_distance: float
     on_highway: bool
-    signals: list[RoadSignal] = []
+    signals: list[RoadSignal]
+
+    def __init__(self):
+        self.signals = []
 
     def _get_rightmost_roadlane(self, lane: LaneGraphNode) -> LaneGraphNode:
         current_lane = lane
@@ -51,6 +54,22 @@ class Road:
         distance = np.sum(self._rightmost_lanes_lengths[:index + 1]).item()
         distance -= rightmost_lane.data.distance_to_end(projection)
         return distance, self._total_distance
+
+    def calculate_s_of_exit_end(self, exit_lane: LaneGraphNode) -> Optional[float]:
+        if exit_lane.data.lane_subtype != LaneSubtype.EXIT:
+            return None
+        if exit_lane not in self._rightmost_lanes:
+            return None
+        index = self._rightmost_lanes.index(exit_lane)
+        result = np.sum(self._rightmost_lanes_lengths[:index]).item()
+        current_lane = exit_lane
+        while current_lane.data.lane_subtype == LaneSubtype.EXIT:
+            result += current_lane.data.centerline_total_distance
+            index += 1
+            if index >= len(self._rightmost_lanes):
+                break
+            current_lane = self._rightmost_lanes[index]
+        return result
 
 
 class RoadManager:
