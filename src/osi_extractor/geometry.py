@@ -63,25 +63,15 @@ def closest_projected_point(
     t, v = project_onto_line_segments(p, start, end)
     relevant_indexes,  = np.nonzero((0 <= t) & (t <= 1))
     if len(relevant_indexes) <= 0:
-        # determine the closest segment start
-        d = start - p
-        distance_squared = np.einsum("ij,ij->i", d, d)
-        min_i = np.argmin(distance_squared)
-        # also consider the final segment end
-        last_i = end.shape[0] - 1
-        last_d = end[last_i, :] - p
-        if np.dot(last_d, last_d) < distance_squared[min_i]:
-            return ProjectionResult(
-                projected_point=end[last_i],
-                segment_index=last_i,
-                segment_progress=1.0
-            )
-        else:
-            return ProjectionResult(
-                projected_point=start[min_i],
-                segment_index=min_i,
-                segment_progress=0.0
-            )
+        """
+        p could not be projected onto any line segment
+        --> determine the closest segment start
+        """
+        return closest_segment_start_or_end(p, start, end)
+    """
+    p could be projected onto one or more line segments
+    --> determine the segment with the smallest projection distance
+    """
     t_relevant = t[relevant_indexes]
     projected = (start[relevant_indexes, :]
                  + np.expand_dims(t_relevant, axis=-1) * v[relevant_indexes, :])
@@ -93,6 +83,31 @@ def closest_projected_point(
         segment_index=relevant_indexes[i],
         segment_progress=t_relevant[i],
     )
+
+
+def closest_segment_start_or_end(p, segment_starts, segment_ends):
+    d = segment_starts - p
+    """
+    This np.einsum call is equivalent to np.sum(d * d, axis=1). However, during testing np.einsum was more efficient.
+    """
+    distance_squared = np.einsum("ij,ij->i", d, d)
+    min_i = np.argmin(distance_squared)
+    # also consider the final segment end
+    last_i = segment_ends.shape[0] - 1
+    last_d = segment_ends[last_i, :] - p
+    if np.dot(last_d, last_d) < distance_squared[min_i]:
+        return ProjectionResult(
+            projected_point=segment_ends[last_i],
+            segment_index=last_i,
+            segment_progress=1.0
+        )
+    else:
+        return ProjectionResult(
+            projected_point=segment_starts[min_i],
+            segment_index=min_i,
+            segment_progress=0.0
+        )
+
 
 class Orientation:
     _matrix: np.ndarray
