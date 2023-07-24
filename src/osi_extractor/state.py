@@ -14,6 +14,7 @@ from .geometry import angle_of_segment, osi_vector_to_ndarray
 from .lane import LaneBoundaryMarkingType, LaneSubtype, LaneType
 from .lanegraph import LaneGraph, NeighboringLaneSignal
 from .road import Road, RoadManager, RoadSignal
+from .speed import Speed
 
 YAW_IS_ALREADY_RELATIVE = True  # TODO: decide on where to set such flags
 
@@ -105,7 +106,7 @@ class MovingObjectState:
     object_type: int
     dimensions: Dimension3d  # TODO: is called dimension without s in osi
     location: Vector3d  # TODO: is called position in osi
-    velocity: Vector3d
+    velocity: Speed
     acceleration: Vector3d
     orientation: Orientation3d
     lane_ids: list[int]
@@ -129,7 +130,7 @@ class MovingObjectState:
         self.object_type = mo.type
         self.dimensions = mo.base.dimension
         self.location = mo.base.position
-        self.velocity = mo.base.velocity
+        self.velocity = Speed.from_osi_velocity(mo.base.velocity)
         self.acceleration = mo.base.acceleration
         self.orientation = mo.base.orientation
         self.lane_ids = get_all_assigned_lane_ids(mo)
