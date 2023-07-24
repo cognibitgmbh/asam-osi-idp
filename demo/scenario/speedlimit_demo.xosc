@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSCENARIO>
+    <FileHeader revMajor="1"
+                revMinor="1"
+                date="2023-06-02T13:00:00"
+                description="osi_extractor demo with speed limits"
+                author="Marvin Heinzelmann"/>
+    <RoadNetwork>
+        <LogicFile filepath="soderleden_speedlimit.xodr" />
+    </RoadNetwork>
+    <Entities>
+        <ScenarioObject name="Ego">
+            <!--
+                Vehicle declaration is copied from the vehicle catalog in the esmini GitHub repository:
+                https://github.com/esmini/esmini/blob/master/resources/xosc/Catalogs/Vehicles/VehicleCatalog.xosc
+            -->
+            <Vehicle name="car_blue" vehicleCategory="car" model3d="models/car_blue.osgb">
+                <!-- model bounding box xyz: 1.46, 0.00, 0.77 lwh: 5.04, 2.04, 1.49 -->
+                <BoundingBox>
+                    <Center x="1.45" y="0.0" z="0.75"/>
+                    <Dimensions width="2.0" length="5.04" height="1.5"/>
+                </BoundingBox>
+                <Performance maxSpeed="250" maxDeceleration="25" maxAcceleration="20"/>
+                <Axles>
+                    <FrontAxle maxSteering="0.523598775598" wheelDiameter="0.8" trackWidth="1.68" positionX="2.98" positionZ="0.4"/>
+                    <RearAxle maxSteering="0.523598775598" wheelDiameter="0.8" trackWidth="1.68" positionX="0" positionZ="0.4"/>
+                </Axles>
+                <Properties>
+                    <Property name="model_id" value="2"/>
+                <!-- Scale modes: None, BBToModel, ModelToBB -->
+                    <Property name="scaleMode" value="BBToModel"/>
+                </Properties>
+            </Vehicle>
+            <ObjectController>
+                <Controller name="UDPDriverController">
+                    <Properties>
+                        <Property name="basePort" value="49950" />
+                        <Property name="port" value="0" />
+                        <Property name="execMode" value="synchronous" />
+                    </Properties>
+                </Controller>
+            </ObjectController>
+        </ScenarioObject>
+    </Entities>
+    <Storyboard>
+        <Init>
+            <Actions>
+                <Private entityRef="Ego">
+                    <PrivateAction>
+                        <TeleportAction>
+                            <Position>
+                                <LanePosition roadId="2" laneId="-2" offset="0" s="0" />
+                            </Position>
+                        </TeleportAction>
+                    </PrivateAction>
+                    <PrivateAction>
+                        <ActivateControllerAction longitudinal="true" lateral="true" />
+                    </PrivateAction>
+                </Private>
+            </Actions>
+        </Init>
+        <Story>
+            <Act name="EmptyAct" />
+        </Story>
+    </Storyboard>
+</OpenSCENARIO>
